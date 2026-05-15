@@ -22,6 +22,8 @@
     deleteCta: string;
     deleteOk: string;
     deleteNotFound: string;
+    tokenWarningTitle: string;
+    tokenWarningBody: string;
   };
 
   let { labels, apiBase, powBits }: { labels: Labels; apiBase: string; powBits: number } = $props();
@@ -95,7 +97,11 @@
     <div class="success">
       <h2>{labels.successTitle}</h2>
       {#if signatureToken}
-        <p>Signature token: <code>{signatureToken}</code></p>
+        <details class="token-details">
+          <summary>{labels.tokenWarningTitle}</summary>
+          <p class="token-warning">⚠️ {labels.tokenWarningBody}</p>
+          <code class="token">{signatureToken}</code>
+        </details>
       {/if}
     </div>
   {:else if phase === "duplicate"}
@@ -181,4 +187,11 @@
   .success { background: #e6f7ec; }
   .duplicate { background: #fdf2e6; }
   .error { color: #c00; }
+  .token-details { margin-top: 1rem; padding: 0.75rem; background: #fff8e6;
+                   border-left: 3px solid #c80; border-radius: 4px; }
+  .token-details summary { cursor: pointer; font-weight: 600; }
+  .token-warning { font-size: 0.9rem; margin: 0.75rem 0; }
+  .token { display: block; word-break: break-all; font-size: 0.75rem;
+           background: #fff; padding: 0.5rem; border-radius: 3px;
+           font-family: ui-monospace, "SF Mono", Menlo, monospace; }
 </style>

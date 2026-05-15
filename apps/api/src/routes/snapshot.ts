@@ -9,7 +9,7 @@ snapshotRoute.get("/:date", async (c) => {
     return c.json({ error: "invalid_date" }, 400);
   }
   const row = await c.env.DB.prepare(
-    "SELECT date, total_count, merkle_root, csv_url, signed_by FROM daily_snapshots WHERE date = ?",
+    "SELECT date, total_count, merkle_root, csv_url FROM daily_snapshots WHERE date = ?",
   )
     .bind(date)
     .first();

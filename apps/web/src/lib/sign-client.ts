@@ -41,7 +41,8 @@ export async function sign(input: SignInput, onProgress?: (phase: string) => voi
   }
 
   onProgress?.("proof_of_work");
-  const nonce = await minePoW(commitmentB64, input.powBits);
+  const bucket = currentPowBucket();
+  const nonce = await minePoW(commitmentB64, bucket, input.powBits);
 
   onProgress?.("submitting");
   const res = await fetch(`${input.apiBase}/api/sign`, {
@@ -52,6 +53,7 @@ export async function sign(input: SignInput, onProgress?: (phase: string) => voi
       initials: input.initials || undefined,
       comment: input.comment || undefined,
       pow_nonce: nonce,
+      pow_bucket: bucket,
     }),
   });
 
@@ -85,13 +87,14 @@ export async function deleteSignature(
   }
 
   onProgress?.("proof_of_work");
-  const nonce = await minePoW(commitmentB64, input.powBits);
+  const bucket = currentPowBucket();
+  const nonce = await minePoW(commitmentB64, bucket, input.powBits);
 
   onProgress?.("submitting");
   const res = await fetch(`${input.apiBase}/api/sign`, {
     method: "DELETE",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ commitment: commitmentB64, pow_nonce: nonce }),
+    body: JSON.stringify({ commitment: commitmentB64, pow_nonce: nonce, pow_bucket: bucket }),
   });
 
   if (res.status === 200) return { status: "deleted" };
@@ -101,10 +104,14 @@ export async function deleteSignature(
   return { status: "error", code: String(res.status), message: body };
 }
 
-async function minePoW(commitment: string, bits: number): Promise<string> {
+export function currentPowBucket(): number {
+  return Math.floor(Date.now() / 1000 / 300);
+}
+
+async function minePoW(commitment: string, bucket: number, bits: number): Promise<string> {
   for (let i = 0; ; i++) {
     const nonce = i.toString(36);
-    const hex = await sha256Hex(`${commitment}:${nonce}`);
+    const hex = await sha256Hex(`${commitment}:${nonce}:${bucket}`);
     if (leadingZeroBits(hex) >= bits) return nonce;
     if (i > 10_000_000) throw new Error("PoW mining gave up");
   }

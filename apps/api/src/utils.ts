@@ -68,6 +68,34 @@ export function bytesToB64(bytes: Uint8Array): string {
   return btoa(bin);
 }
 
+export function utcDate(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
+// Returns today's IP-hash salt, generating it lazily on the first hit of the
+// day. Concurrent generators are safe: INSERT OR IGNORE + re-read settles on
+// one canonical row. Old rows are purged by the daily cron handler.
+export async function getDailyIpSalt(db: D1Database, date: string): Promise<string> {
+  const row = await db
+    .prepare("SELECT salt FROM daily_ip_salt WHERE date = ?")
+    .bind(date)
+    .first<{ salt: string }>();
+  if (row) return row.salt;
+
+  const bytes = crypto.getRandomValues(new Uint8Array(32));
+  const salt = bytesToB64(bytes);
+  await db
+    .prepare("INSERT OR IGNORE INTO daily_ip_salt (date, salt) VALUES (?, ?)")
+    .bind(date, salt)
+    .run();
+
+  const row2 = await db
+    .prepare("SELECT salt FROM daily_ip_salt WHERE date = ?")
+    .bind(date)
+    .first<{ salt: string }>();
+  return row2!.salt;
+}
+
 // Applies the Level-2 server-side HMAC layer to a client-side Argon2id
 // commitment. Without the secret salt, no party — including someone holding
 // the official NIA registry — can brute-force the snapshot.
@@ -97,14 +125,34 @@ export async function applySecretSaltMix(
   return bytesToB64(new Uint8Array(out));
 }
 
-// Lightweight client proof-of-work check: HMAC-free, just verify that
-// SHA-256(commitment || nonce) has the requested number of leading zero bits.
-// This is a cheap anti-spam trick; it does not need to be cryptographically
-// authenticated — the only thing it does is make scripted mass submissions
-// expensive client-side.
-export async function verifyPoW(commitment: string, nonce: string, bits: number): Promise<boolean> {
+// Proof-of-work check, bound to a 5-minute time bucket.
+//
+// SHA-256(commitment || ":" || nonce || ":" || time_bucket) must have the
+// requested number of leading zero bits, where time_bucket = floor(now / 300).
+// The server accepts the client's bucket if it falls within [server-1, server],
+// which gives ~5–10 minutes of validity. Outside that window the nonce is
+// stale and the client must re-mine.
+//
+// This binds the work to a short time window: a pre-mined nonce cannot be
+// replayed indefinitely as a duplicate-check oracle.
+export const POW_BUCKET_SECONDS = 300;
+export function currentPowBucket(now = Date.now()): number {
+  return Math.floor(now / 1000 / POW_BUCKET_SECONDS);
+}
+
+export async function verifyPoW(
+  commitment: string,
+  nonce: string,
+  bucket: number,
+  bits: number,
+): Promise<boolean> {
   if (typeof nonce !== "string" || nonce.length > 64) return false;
-  const hex = await sha256Hex(commitment + ":" + nonce);
+  if (!Number.isInteger(bucket) || bucket < 0) return false;
+  const serverBucket = currentPowBucket();
+  // Tolerate up to 1 bucket of clock skew in either direction.
+  if (bucket > serverBucket || bucket < serverBucket - 1) return false;
+
+  const hex = await sha256Hex(commitment + ":" + nonce + ":" + bucket);
   const bytes = hex.match(/.{2}/g)!.map((b) => parseInt(b, 16));
   let zeroBits = 0;
   for (const b of bytes) {

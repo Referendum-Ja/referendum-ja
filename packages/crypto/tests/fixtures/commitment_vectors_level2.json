@@ -1,0 +1,11 @@
+{
+  "_meta": {
+    "purpose": "Reference vectors for the Level-2 pipeline (server-side HMAC). The test salt below is NOT the production secret salt — it is a deterministic constant for cross-implementation parity testing only.",
+    "test_secret_salt_b64": "BwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwc=",
+    "test_secret_salt_note": "32 bytes of 0x07. Production deploys MUST use a random 32-byte salt generated at the 5-of-7 custodian ceremony; this constant exists exclusively to verify that Python audit/audit.py and the TypeScript Worker produce bit-identical results under the same inputs."
+  },
+  "level2": [
+    { "nia": "123456A", "client_commitment_b64": "fotv3sbTCxA8YbIg1LKJb1QitYT3ZvphU+NiujZR2ao=", "stored_commitment_b64": "5gbpxpXgrsxr3+tRGX9lpmxSoW736D+jlffAwUd1RZU=" },
+    { "nia": "999999B", "client_commitment_b64": "27s5aWgta8T/vu2fPy/PcWnAt0jaWS+rL5tNrvcQ5go=", "stored_commitment_b64": "gdvs8DgJMVn43Rgy5gbFYDaYSkCUQatGbTgkZGV8igk=" }
+  ]
+}

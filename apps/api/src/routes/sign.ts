@@ -10,6 +10,8 @@ import {
   hmacSha256,
   verifyPoW,
   applySecretSaltMix,
+  getDailyIpSalt,
+  utcDate,
 } from "../utils.ts";
 
 export const signRoute = new Hono<{ Bindings: Env }>();
@@ -19,12 +21,23 @@ type SignBody = {
   initials?: unknown;
   comment?: unknown;
   pow_nonce?: unknown;
+  pow_bucket?: unknown;
 };
 
 type DeleteBody = {
   commitment?: unknown;
   pow_nonce?: unknown;
+  pow_bucket?: unknown;
 };
+
+function extractPow(body: { pow_nonce?: unknown; pow_bucket?: unknown }): {
+  nonce: string;
+  bucket: number;
+} | null {
+  if (typeof body.pow_nonce !== "string") return null;
+  if (typeof body.pow_bucket !== "number" || !Number.isInteger(body.pow_bucket)) return null;
+  return { nonce: body.pow_nonce, bucket: body.pow_bucket };
+}
 
 signRoute.post("/", async (c) => {
   const body = (await c.req.json().catch(() => null)) as SignBody | null;
@@ -41,8 +54,8 @@ signRoute.post("/", async (c) => {
   }
 
   const powBits = getInt(c.env, "POW_BITS", 18);
-  const nonce = typeof body.pow_nonce === "string" ? body.pow_nonce : "";
-  if (!(await verifyPoW(body.commitment, nonce, powBits))) {
+  const pow = extractPow(body);
+  if (!pow || !(await verifyPoW(body.commitment, pow.nonce, pow.bucket, powBits))) {
     return c.json({ error: "pow_failed" }, 400);
   }
 
@@ -109,8 +122,8 @@ signRoute.delete("/", async (c) => {
   }
 
   const powBits = getInt(c.env, "POW_BITS", 18);
-  const nonce = typeof body.pow_nonce === "string" ? body.pow_nonce : "";
-  if (!(await verifyPoW(body.commitment, nonce, powBits))) {
+  const pow = extractPow(body);
+  if (!pow || !(await verifyPoW(body.commitment, pow.nonce, pow.bucket, powBits))) {
     return c.json({ error: "pow_failed" }, 400);
   }
 
@@ -134,8 +147,14 @@ async function checkAndConsumeRateLimit(env: Env, req: Request): Promise<boolean
     req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
     "0.0.0.0";
 
-  const salt = env.IP_HASH_SALT ?? "no-salt-development-only";
-  const ipHash = await sha256Hex(`${ip}|${salt}`);
+  // Daily-rotating salt from D1: today's salt is generated lazily and
+  // discarded after 14 days by the cron handler. A constant fallback secret
+  // (IP_HASH_SALT) is mixed in so D1 read access alone is not enough to
+  // re-derive a given IP — it must be combined with both the daily salt and
+  // the env secret.
+  const dailySalt = await getDailyIpSalt(env.DB, utcDate());
+  const envSalt = env.IP_HASH_SALT ?? "no-salt-development-only";
+  const ipHash = await sha256Hex(`${ip}|${dailySalt}|${envSalt}`);
 
   const windowSeconds = getInt(env, "RATE_LIMIT_WINDOW_SECONDS", 600);
   const max = getInt(env, "RATE_LIMIT_MAX", 20);

@@ -27,32 +27,86 @@ jobs:
         run: pnpm audit --audit-level=moderate
         continue-on-error: false
 
-  python-audit:
+  cross-impl-parity:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
       - run: pip install -r audit/requirements.txt
-      - name: Smoke-test audit script
+      - run: pnpm install --frozen-lockfile
+
+      - name: Level 1 — Python audit matches frozen TS vectors
         run: |
-          # Generate a fake snapshot from the sample NIAs and confirm we
-          # match 3/3. This catches drift between params.ts and audit.py.
-          python3 -c "
-          import csv, sys
+          python3 - <<'PY'
+          import json, sys
           sys.path.insert(0, 'audit')
           from audit import commit
-          with open('audit/sample-nia.csv') as f:
-              nias = [r['nia'] for r in csv.DictReader(f)]
-          commitments = [commit(n, None) for n in nias]
-          with open('/tmp/snap.csv', 'w') as f:
-              f.write('commitment\n')
-              for c in commitments: f.write(c + '\n')
-          "
-          python3 audit/audit.py \
-            --nia-list audit/sample-nia.csv \
-            --snapshot /tmp/snap.csv
+          with open('packages/crypto/tests/fixtures/commitment_vectors.json') as f:
+              fix = json.load(f)
+          fail = 0
+          for v in fix['level1']:
+              got = commit(v['nia'], None)
+              if got != v['commitment_b64']:
+                  print(f"FAIL  L1 NIA={v['nia']!r}  got={got}  want={v['commitment_b64']}")
+                  fail += 1
+              else:
+                  print(f"OK    L1 NIA={v['nia']!r}  {got}")
+          sys.exit(fail)
+          PY
+
+      - name: Level 2 — Python audit matches frozen TS vectors with test salt
+        run: |
+          python3 - <<'PY'
+          import json, base64, sys
+          sys.path.insert(0, 'audit')
+          from audit import commit, client_commit
+          with open('packages/crypto/tests/fixtures/commitment_vectors_level2.json') as f:
+              fix = json.load(f)
+          salt = base64.b64decode(fix['_meta']['test_secret_salt_b64'])
+          fail = 0
+          for v in fix['level2']:
+              cc = base64.b64encode(client_commit(v['nia'])).decode()
+              if cc != v['client_commitment_b64']:
+                  print(f"FAIL  L2 client(NIA={v['nia']!r})  got={cc}  want={v['client_commitment_b64']}")
+                  fail += 1
+              stored = commit(v['nia'], salt)
+              if stored != v['stored_commitment_b64']:
+                  print(f"FAIL  L2 stored(NIA={v['nia']!r})  got={stored}  want={v['stored_commitment_b64']}")
+                  fail += 1
+              else:
+                  print(f"OK    L2 NIA={v['nia']!r}  client={cc}  stored={stored}")
+          sys.exit(fail)
+          PY
+
+      - name: Level 2 — Worker applySecretSaltMix matches the same fixtures
+        run: |
+          node --no-warnings --experimental-vm-modules - <<'JS'
+          import("./apps/api/src/utils.ts").then(async (m) => {
+            const fs = await import("node:fs");
+            const fix = JSON.parse(fs.readFileSync("packages/crypto/tests/fixtures/commitment_vectors_level2.json"));
+            const salt = fix._meta.test_secret_salt_b64;
+            let fail = 0;
+            for (const v of fix.level2) {
+              const got = await m.applySecretSaltMix(v.client_commitment_b64, salt);
+              if (got !== v.stored_commitment_b64) {
+                console.error(`FAIL  TS NIA=${v.nia}  got=${got}  want=${v.stored_commitment_b64}`);
+                fail++;
+              } else {
+                console.log(`OK    TS NIA=${v.nia}  ${got}`);
+              }
+            }
+            process.exit(fail);
+          }).catch(e => { console.error(e); process.exit(99); });
+          JS
 
   semgrep:
     runs-on: ubuntu-latest

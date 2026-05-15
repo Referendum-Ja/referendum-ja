@@ -40,6 +40,12 @@ export async function runDailySnapshot(env: Env): Promise<void> {
   // Clean rate-limit entries older than 7 days.
   const cutoff = Math.floor(Date.now() / 1000) - 7 * 86400;
   await env.DB.prepare("DELETE FROM rate_limits WHERE window_start < ?").bind(cutoff).run();
+
+  // Purge daily IP salts older than 14 days. We keep 14 days so a stale
+  // rate-limit row (created within the 7-day window) can still be evaluated
+  // against the right salt during its lifetime.
+  const cutoffDate = new Date(Date.now() - 14 * 86400_000).toISOString().slice(0, 10);
+  await env.DB.prepare("DELETE FROM daily_ip_salt WHERE date < ?").bind(cutoffDate).run();
 }
 
 // Merkle tree per RFC 6962 §2.1: domain-separated leaves (prefix 0x00) and
