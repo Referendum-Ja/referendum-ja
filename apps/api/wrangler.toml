@@ -15,7 +15,7 @@ crons = ["0 3 * * *"]
 [[d1_databases]]
 binding = "DB"
 database_name = "referendum-ja"
-database_id = "<PENDING: create with `wrangler d1 create referendum-ja` and paste the id here>"
+database_id = "0ec33409-1f66-4daa-9003-02c71274012c"
 
 # Secrets (set with `wrangler secret put <name>`):
 #   IP_HASH_SALT          — 32-byte base64, rotated daily by the cron worker
