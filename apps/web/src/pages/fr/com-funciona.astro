@@ -24,20 +24,22 @@ import Base from "../../layouts/Base.astro";
     <h2>Ce que le Govern ne voit pas</h2>
     <p>Qui a signé. Le calcul de vérification produit un nombre, pas une liste de noms.</p>
 
-    <h2>Pourquoi cinq dépositaires</h2>
-    <p>L'anonymat ne dépend pas d'une seule entité : dans la version de protection renforcée du système, une clé secrète est <strong>partagée en cinq fragments</strong> et confiée à cinq personnes publiques et indépendantes. Il faut en réunir trois sur cinq pour reconstituer la clé. Ce design protège contre <strong>les pressions politiques</strong> : aucun acteur seul — gouvernement, parti, journaliste, adversaire — ne peut identifier les signataires. Il faut trois dépositaires coopérants en même temps, et ceux-ci se sont publiquement engagés à ne le faire qu'à la fin de la collecte.</p>
+    <h2>Pourquoi sept dépositaires : l'Armari de les Set Claus</h2>
+    <p>L'Andorre a une tradition séculaire de gouvernance consensuelle. À la <a href="https://www.casadelavall.ad/fr/interior">Casa de la Vall</a>, les archives nationales étaient conservées dans l'<strong>Armari de les Set Claus</strong> (Armoire des Sept Clés) : un coffre à sept serrures distinctes, où chaque Conseiller représentant une paroisse détenait une clé différente. Il fallait la présence simultanée des sept clés pour ouvrir l'armoire. Personne ne pouvait accéder seul aux archives du pays.</p>
+    <p>Cette pétition applique le même principe au monde numérique. La clé secrète du système cryptographique est <strong>partagée en sept fragments</strong>, confiés à sept personnes publiques et indépendantes — une par paroisse, en hommage à la tradition. Il faut en réunir <strong>cinq sur sept</strong> pour reconstituer la clé (ce qui tolère jusqu'à deux absences, afin que la cérémonie reste réalisable même si un ou deux dépositaires ne peuvent pas y assister).</p>
+    <p>Ce design protège contre <strong>les pressions politiques</strong> : aucun acteur seul — gouvernement, parti, journaliste, adversaire — ne peut identifier les signataires. Il faut cinq dépositaires coopérants en même temps, et ceux-ci se sont publiquement engagés à ne le faire qu'à la fin de la collecte.</p>
 
     <h2>Honnêteté technique</h2>
     <p>Le code est public. Tout chercheur peut l'auditer. La promesse d'anonymat repose sur trois piliers :</p>
     <ul>
       <li><strong>Cryptographique</strong> : la fonction de dérivation (Argon2id) est délibérément lente, ce qui rend coûteuse toute tentative de désanonymisation.</li>
-      <li><strong>Cryptographique renforcé (Niveau 2)</strong> : la clé secrète partagée entre cinq dépositaires rend la désanonymisation impossible pendant la collecte, même pour quelqu'un disposant de la liste des NIA andorrans.</li>
+      <li><strong>Cryptographique renforcé (Niveau 2)</strong> : la clé secrète partagée entre sept dépositaires rend la désanonymisation impossible pendant la collecte, même pour quelqu'un disposant de la liste des NIA andorrans.</li>
       <li><strong>Politique et juridique</strong> : le Govern, qui possède la liste des NIA valides, est le seul acteur capable d'inverser la fonction. Il est tenu par la loi andorrane et par l'APDA de ne pas le faire en dehors de la procédure de vérification consentie.</li>
     </ul>
 
     <aside class="warn">
       <h3>Limite honnête</h3>
-      <p>Aucun système n'est parfait. Si la liste complète des NIA andorrans fuitait publiquement <em>et</em> que le secret des cinq dépositaires était simultanément compromis, n'importe qui pourrait désanonymiser cette pétition. Cette plateforme ne protège pas contre une compromission simultanée de ces deux éléments, qui constituerait un événement politique et juridique majeur, pas cryptographique.</p>
+      <p>Aucun système n'est parfait. Si la liste complète des NIA andorrans fuitait publiquement <em>et</em> que le secret des sept dépositaires était simultanément compromis (cinq clés sur sept aux mains d'une même coalition hostile), n'importe qui pourrait désanonymiser cette pétition. Cette plateforme ne protège pas contre une compromission simultanée de ces deux éléments, qui constituerait un événement politique et juridique majeur, pas cryptographique.</p>
     </aside>
 
     <p><a href="/fr/verificacio">Voir le protocole d'audit technique →</a></p>

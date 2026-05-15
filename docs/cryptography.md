@@ -29,10 +29,10 @@ The cardinality of the input space is small (the Andorran citizen body is ≈ 26
 | Adversary | Resources | Anonymity holds? | Why |
 |---|---|---|---|
 | General public | The site, the snapshots, the source code | **Yes** | No access to the NIA list. Brute-forcing 10⁷ NIA candidates through Argon2id (256 MiB × 4) is computationally significant but possible for a determined adversary in Level 1. Level 2 makes it infeasible because the secret salt is unknown. |
-| Journalist with a leaked NIA list | The list + everything above | **Conditional** | In Level 1: 4–8 CPU-hours to deanonymise. In Level 2: infeasible until the secret salt is reconstituted, which requires the cooperation of 3 of the 5 public custodians, all of whom have committed publicly to release it only at the end of the petition. |
+| Journalist with a leaked NIA list | The list + everything above | **Conditional** | In Level 1: 4–8 CPU-hours to deanonymise. In Level 2: infeasible until the secret salt is reconstituted, which requires the cooperation of 5 of the 7 public custodians (one per Andorran parish, in homage to the *Armari de les Set Claus* at the [Casa de la Vall](https://www.casadelavall.ad/fr/interior)), all of whom have committed publicly to release it only at the end of the petition. |
 | Govern d'Andorra | The official list, full legal authority | Anonymity does not hold technically — but the Govern is **bound by APDA law** and by political accountability not to publish individual matches. The system reduces the attack to a procedural one, not a cryptographic one. |
-| Coalition of ≥ 3 custodians + leaked NIA list | The Level-2 secret salt + the list | **No, but loud** | This is the only path to total deanonymisation. It requires a public ceremony breach by named custodians + an illegal exfiltration of the official registry. Both events are politically catastrophic and detectable. |
-| Single rogue custodian | One of 5 shares | **Yes** | Shamir 3-of-5: one share leaks no information. |
+| Coalition of ≥ 5 custodians + leaked NIA list | The Level-2 secret salt + the list | **No, but loud** | This is the only path to total deanonymisation. It requires a public ceremony breach by 5 named custodians out of 7 + an illegal exfiltration of the official registry. Both events are politically catastrophic and detectable. |
+| Single rogue custodian (or up to 4 colluding) | Up to 4 of 7 shares | **Yes** | Shamir 5-of-7: any subset of 4 or fewer shares leaks no information about the secret. |
 
 ## Choice of Argon2id parameters
 
@@ -65,7 +65,7 @@ After normalisation, the NIA must match `/^[0-9]{6}[A-Z]$/`. Inputs that fail th
 
 ## Sealed secret salt (Level 2)
 
-The secret salt is 32 random bytes, generated once on an air-gapped machine, split into 5 Shamir shares with threshold 3, and distributed to five public custodians. The ceremony is filmed; the shares are physical (USB key + paper backup, sealed in tamper-evident envelopes).
+The secret salt is 32 random bytes, generated once on an air-gapped machine, split into 7 Shamir shares with threshold 5, and distributed to seven public custodians — one per Andorran parish, in homage to the *Armari de les Set Claus* at the [Casa de la Vall](https://www.casadelavall.ad/fr/interior), the historical seven-locked cabinet of the national archives. The ceremony is filmed; the shares are physical (USB key + paper backup, sealed in tamper-evident envelopes).
 
 The Worker loads the secret salt from a sealed Wrangler secret (`SECRET_SALT_B64`), set once and never rotated. Rotation is impossible by design: rotating the salt would invalidate every prior commitment.
 

@@ -24,20 +24,22 @@ import Base from "../layouts/Base.astro";
     <h2>Què no veu el Govern</h2>
     <p>Qui ha signat. El càlcul de verificació produeix un nombre, no una llista de noms.</p>
 
-    <h2>Per què cinc dipositaris</h2>
-    <p>L'anonimat no depèn d'una única entitat: a la versió de protecció reforçada del sistema, una clau secreta és <strong>partida en cinc fragments</strong> i confiada a cinc persones públiques i independents. Cal reunir-ne tres sobre cinc per reconstituir la clau. Aquest disseny protegeix contra <strong>les pressions polítiques</strong>: cap actor sol — ni govern, ni partit, ni periodista, ni adversari — no pot identificar els signants. Calen tres dipositaris cooperatius alhora, i aquests s'han compromès públicament a no fer-ho fins al final de la recollida.</p>
+    <h2>Per què set dipositaris : l'Armari de les Set Claus</h2>
+    <p>Andorra té una tradició centenària de governança consensuada. A la <a href="https://www.casadelavall.ad/fr/interior">Casa de la Vall</a>, els arxius nacionals es conservaven a l'<strong>Armari de les Set Claus</strong> : una caixa de set serralles diferents, on cada Conseller representant d'una parròquia posseïa una clau distinta. Calia la presència simultània de totes les claus per obrir l'armari. Cap persona no podia accedir tota sola als arxius del país.</p>
+    <p>Aquesta petició aplica el mateix principi al món digital. La clau secreta del sistema criptogràfic és <strong>partida en set fragments</strong>, confiats a set persones públiques i independents — una per parròquia, en homenatge a la tradició. Cal reunir-ne <strong>cinc sobre set</strong> per reconstituir la clau (cosa que tolera fins a dues absències, per fer la cerimònia realitzable encara que un o dos dipositaris no puguin assistir-hi).</p>
+    <p>Aquest disseny protegeix contra <strong>les pressions polítiques</strong> : cap actor sol — ni govern, ni partit, ni periodista, ni adversari — no pot identificar els signants. Calen cinc dipositaris cooperatius alhora, i aquests s'han compromès públicament a no fer-ho fins al final de la recollida.</p>
 
     <h2>Honestedat tècnica</h2>
     <p>El codi és públic. Qualsevol investigador pot auditar-lo. La promesa d'anonimat reposa sobre tres pilars:</p>
     <ul>
       <li><strong>Criptogràfic</strong> : la funció de derivació (Argon2id) és deliberadament lenta, cosa que fa costosa qualsevol temptativa de desanonimització.</li>
-      <li><strong>Criptogràfic reforçat (Nivell 2)</strong> : la clau secreta repartida entre cinc dipositaris fa que la desanonimització sigui impossible mentre dura la recollida, fins i tot per a algú que disposi de la llista dels NIA andorrans.</li>
+      <li><strong>Criptogràfic reforçat (Nivell 2)</strong> : la clau secreta repartida entre set dipositaris fa que la desanonimització sigui impossible mentre dura la recollida, fins i tot per a algú que disposi de la llista dels NIA andorrans.</li>
       <li><strong>Polític i jurídic</strong> : el Govern, que posseeix la llista dels NIA vàlids, és l'únic actor capaç d'invertir la funció. Està obligat per la llei andorrana i per l'APDA a no fer-ho fora del procediment de verificació consentida.</li>
     </ul>
 
     <aside class="warn">
       <h3>Límit honest</h3>
-      <p>Cap sistema no és perfecte. Si la llista completa dels NIA andorrans fos divulgada públicament <em>i</em> el secret dels cinc dipositaris fos compromès simultàniament, qualsevol podria desanonimitzar aquesta petició. Aquesta plataforma no protegeix contra una compromissió simultània d'aquests dos elements, que constituiria un esdeveniment polític i jurídic major, no pas criptogràfic.</p>
+      <p>Cap sistema no és perfecte. Si la llista completa dels NIA andorrans fos divulgada públicament <em>i</em> el secret dels set dipositaris fos compromès simultàniament (cinc claus sobre set en mans d'una mateixa coalició hostil), qualsevol podria desanonimitzar aquesta petició. Aquesta plataforma no protegeix contra una compromissió simultània d'aquests dos elements, que constituiria un esdeveniment polític i jurídic major, no pas criptogràfic.</p>
     </aside>
 
     <p><a href="/verificacio">Anar al protocol d'auditoria tècnica →</a></p>

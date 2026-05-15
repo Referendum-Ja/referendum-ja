@@ -24,20 +24,22 @@ import Base from "../../layouts/Base.astro";
     <h2>Qué no ve el Govern</h2>
     <p>Quién ha firmado. El cálculo de verificación produce un número, no una lista de nombres.</p>
 
-    <h2>Por qué cinco depositarios</h2>
-    <p>El anonimato no depende de una sola entidad: en la versión de protección reforzada del sistema, una clave secreta se <strong>divide en cinco fragmentos</strong> y se confía a cinco personas públicas e independientes. Hace falta reunir tres de cinco para reconstituir la clave. Este diseño protege contra <strong>las presiones políticas</strong>: ningún actor solo —gobierno, partido, periodista, adversario— puede identificar a los firmantes. Hacen falta tres depositarios cooperativos a la vez, y estos se han comprometido públicamente a no hacerlo hasta el final de la recogida.</p>
+    <h2>Por qué siete depositarios : el Armari de les Set Claus</h2>
+    <p>Andorra tiene una tradición secular de gobernanza consensuada. En la <a href="https://www.casadelavall.ad/fr/interior">Casa de la Vall</a>, los archivos nacionales se conservaban en el <strong>Armari de les Set Claus</strong> (Armario de las Siete Llaves) : un cofre con siete cerraduras distintas, donde cada Consejero representante de una parroquia poseía una llave diferente. Hacía falta la presencia simultánea de las siete llaves para abrir el armario. Nadie podía acceder solo a los archivos del país.</p>
+    <p>Esta petición aplica el mismo principio al mundo digital. La clave secreta del sistema criptográfico se <strong>divide en siete fragmentos</strong>, confiados a siete personas públicas e independientes — una por parroquia, en homenaje a la tradición. Hace falta reunir <strong>cinco de siete</strong> para reconstituir la clave (lo que tolera hasta dos ausencias, para que la ceremonia siga siendo realizable aunque uno o dos depositarios no puedan asistir).</p>
+    <p>Este diseño protege contra <strong>las presiones políticas</strong> : ningún actor solo —gobierno, partido, periodista, adversario— puede identificar a los firmantes. Hacen falta cinco depositarios cooperativos a la vez, y estos se han comprometido públicamente a no hacerlo hasta el final de la recogida.</p>
 
     <h2>Honestidad técnica</h2>
     <p>El código es público. Cualquier investigador puede auditarlo. La promesa de anonimato reposa sobre tres pilares:</p>
     <ul>
       <li><strong>Criptográfico</strong>: la función de derivación (Argon2id) es deliberadamente lenta, lo que hace costosa cualquier tentativa de desanonimización.</li>
-      <li><strong>Criptográfico reforzado (Nivel 2)</strong>: la clave secreta repartida entre cinco depositarios hace que la desanonimización sea imposible durante la recogida, incluso para alguien que disponga de la lista de los NIA andorranos.</li>
+      <li><strong>Criptográfico reforzado (Nivel 2)</strong>: la clave secreta repartida entre siete depositarios hace que la desanonimización sea imposible durante la recogida, incluso para alguien que disponga de la lista de los NIA andorranos.</li>
       <li><strong>Político y jurídico</strong>: el Govern, que posee la lista de los NIA válidos, es el único actor capaz de invertir la función. Está obligado por la ley andorrana y por la APDA a no hacerlo fuera del procedimiento de verificación consentida.</li>
     </ul>
 
     <aside class="warn">
       <h3>Límite honesto</h3>
-      <p>Ningún sistema es perfecto. Si la lista completa de los NIA andorranos se filtrase públicamente <em>y</em> el secreto de los cinco depositarios se viese comprometido simultáneamente, cualquiera podría desanonimizar esta petición. Esta plataforma no protege contra una compromisión simultánea de estos dos elementos, que constituiría un acontecimiento político y jurídico mayor, no criptográfico.</p>
+      <p>Ningún sistema es perfecto. Si la lista completa de los NIA andorranos se filtrase públicamente <em>y</em> el secreto de los siete depositarios se viese comprometido simultáneamente (cinco llaves de siete en manos de una misma coalición hostil), cualquiera podría desanonimizar esta petición. Esta plataforma no protege contra una compromisión simultánea de estos dos elementos, que constituiría un acontecimiento político y jurídico mayor, no criptográfico.</p>
     </aside>
 
     <p><a href="/es/verificacio">Ir al protocolo de auditoría técnica →</a></p>
