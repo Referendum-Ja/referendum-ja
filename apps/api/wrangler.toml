@@ -12,6 +12,12 @@ enabled = false
 [triggers]
 crons = ["0 3 * * *"]
 
+# Custom domain — noalacord.com must be on this Cloudflare account.
+[[routes]]
+pattern = "api.noalacord.com"
+zone_name = "noalacord.com"
+custom_domain = true
+
 [[d1_databases]]
 binding = "DB"
 database_name = "referendum-ja"
