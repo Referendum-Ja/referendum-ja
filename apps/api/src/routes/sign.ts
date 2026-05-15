@@ -9,6 +9,7 @@ import {
   sha256Hex,
   hmacSha256,
   verifyPoW,
+  applySecretSaltMix,
 } from "../utils.ts";
 
 export const signRoute = new Hono<{ Bindings: Env }>();
@@ -17,6 +18,11 @@ type SignBody = {
   commitment?: unknown;
   initials?: unknown;
   comment?: unknown;
+  pow_nonce?: unknown;
+};
+
+type DeleteBody = {
+  commitment?: unknown;
   pow_nonce?: unknown;
 };
 
@@ -44,49 +50,82 @@ signRoute.post("/", async (c) => {
     return c.json({ error: "rate_limited" }, 429);
   }
 
+  // Apply Level-2 HMAC layer if a secret salt is configured. Without the
+  // salt, `storedCommitment === clientCommitment` (Level 1 behaviour).
+  const storedCommitment = await applySecretSaltMix(body.commitment, c.env.SECRET_SALT_B64);
+
   const hour = currentHourUTC();
+  const hasComment = typeof body.comment === "string" && body.comment.length > 0;
 
-  let commentId: number | null = null;
-  if (typeof body.comment === "string" && body.comment.length > 0) {
-    const r = await c.env.DB.prepare(
-      "INSERT INTO comments (body, status, created_at_hour) VALUES (?, 'pending', ?)",
-    )
-      .bind(body.comment, hour)
-      .run();
-    commentId = (r.meta.last_row_id ?? null) as number | null;
-  }
-
+  // Insert signature first (the UNIQUE-bearing row). Only on success do we
+  // insert the orphan-resistant comment. With this ordering, a transient
+  // failure cannot leave a comment row pointing at no signature, and a
+  // racing duplicate POST never touches the comments table at all.
   try {
     await c.env.DB.prepare(
       "INSERT INTO signatures (commitment, initials, created_at_hour) VALUES (?, ?, ?)",
     )
-      .bind(body.commitment, body.initials ?? null, hour)
+      .bind(storedCommitment, body.initials ?? null, hour)
       .run();
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : String(e);
     if (msg.includes("UNIQUE")) {
-      // Roll back the comment if any — we never want orphan comments tied to a
-      // rejected duplicate signature. The mapping is intentionally absent in the
-      // schema, so we just discard.
-      if (commentId !== null) {
-        await c.env.DB.prepare("DELETE FROM comments WHERE id = ?").bind(commentId).run();
-      }
       return c.json({ error: "already_signed" }, 409);
     }
     throw e;
+  }
+
+  if (hasComment) {
+    await c.env.DB.prepare("INSERT INTO comments (body, status) VALUES (?, 'pending')")
+      .bind(body.comment)
+      .run();
   }
 
   const tokenSecret = c.env.SIGNATURE_TOKEN_HMAC;
   if (!tokenSecret) {
     return c.json({ ok: true, signature_token: null, note: "signature_token_disabled" }, 201);
   }
-  const tokenPayload = `${body.commitment}:${hour}`;
+  const tokenPayload = `${storedCommitment}:${hour}`;
   const sig = await hmacSha256(tokenSecret, tokenPayload);
-  // The token is autonomous: it embeds the commitment and an HMAC so we can
-  // verify it later without storing anything server-side.
   const token = btoa(`${tokenPayload}:${sig}`).replace(/=+$/, "");
 
   return c.json({ ok: true, signature_token: token }, 201);
+});
+
+// RGPD / Llei 29/2021 art. 16 — right to erasure.
+// The signatory proves NIA ownership by re-deriving the same commitment in
+// their browser; we re-apply the same Level-2 HMAC layer and DELETE by the
+// stored commitment. The NIA itself never reaches the server.
+//
+// Important caveat documented in /avis-legal: deletion creates a gap in the
+// Merkle history once the day's snapshot is published. We accept that — the
+// alternative (refusing deletion) is worse legally.
+signRoute.delete("/", async (c) => {
+  const body = (await c.req.json().catch(() => null)) as DeleteBody | null;
+  if (!body) return c.json({ error: "invalid_body" }, 400);
+
+  if (!isWellFormedCommitment(body.commitment)) {
+    return c.json({ error: "invalid_commitment" }, 400);
+  }
+
+  const powBits = getInt(c.env, "POW_BITS", 18);
+  const nonce = typeof body.pow_nonce === "string" ? body.pow_nonce : "";
+  if (!(await verifyPoW(body.commitment, nonce, powBits))) {
+    return c.json({ error: "pow_failed" }, 400);
+  }
+
+  if (!(await checkAndConsumeRateLimit(c.env, c.req.raw))) {
+    return c.json({ error: "rate_limited" }, 429);
+  }
+
+  const storedCommitment = await applySecretSaltMix(body.commitment, c.env.SECRET_SALT_B64);
+  const r = await c.env.DB.prepare("DELETE FROM signatures WHERE commitment = ?")
+    .bind(storedCommitment)
+    .run();
+
+  const deleted = (r.meta.changes ?? 0) as number;
+  if (deleted === 0) return c.json({ ok: true, deleted: 0 }, 404);
+  return c.json({ ok: true, deleted: 1 }, 200);
 });
 
 async function checkAndConsumeRateLimit(env: Env, req: Request): Promise<boolean> {
@@ -98,8 +137,8 @@ async function checkAndConsumeRateLimit(env: Env, req: Request): Promise<boolean
   const salt = env.IP_HASH_SALT ?? "no-salt-development-only";
   const ipHash = await sha256Hex(`${ip}|${salt}`);
 
-  const windowSeconds = getInt(env, "RATE_LIMIT_WINDOW_SECONDS", 3600);
-  const max = getInt(env, "RATE_LIMIT_MAX", 5);
+  const windowSeconds = getInt(env, "RATE_LIMIT_WINDOW_SECONDS", 600);
+  const max = getInt(env, "RATE_LIMIT_MAX", 20);
   const now = Math.floor(Date.now() / 1000);
   const windowStart = now - (now % windowSeconds);
 

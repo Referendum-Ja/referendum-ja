@@ -36,6 +36,7 @@ import argparse
 import base64
 import csv
 import hashlib
+import hmac
 import json
 import re
 import sys
@@ -69,20 +70,36 @@ def normalise(raw: str) -> str:
     return re.sub(r"[\s\-_.]+", "", s)
 
 
-def commit(nia: str, secret_salt: bytes | None) -> str:
+def client_commit(nia: str) -> bytes:
+    """The same Argon2id commitment the signatory's browser produced. Always
+    salted with PUBLIC_SALT only — the secret salt does NOT enter the password
+    derivation, exactly because the browser cannot know it."""
     n = normalise(nia)
     if not NIA_REGEX.match(n):
         raise ValueError(f"invalid NIA after normalisation: {n!r}")
-    salt = PUBLIC_SALT + (secret_salt or b"")
-    raw = hash_secret_raw(
+    return hash_secret_raw(
         secret=n.encode("ascii"),
-        salt=salt,
+        salt=PUBLIC_SALT,
         time_cost=ARGON2ID["time_cost"],
         memory_cost=ARGON2ID["memory_cost"],
         parallelism=ARGON2ID["parallelism"],
         hash_len=ARGON2ID["hash_len"],
         type=ARGON2ID["type"],
     )
+
+
+def commit(nia: str, secret_salt: bytes | None) -> str:
+    """The stored commitment, mirroring the Worker pipeline:
+       1. Argon2id over the NIA with PUBLIC_SALT (the browser side).
+       2. If a secret salt is provided (Level 2), apply HMAC-SHA256 over the
+          Argon2id output keyed by the secret salt — this is what the Worker
+          does in apps/api/src/utils.ts:applySecretSaltMix.
+       Level 1 (secret_salt is None) yields the raw client commitment."""
+    raw = client_commit(nia)
+    if secret_salt is not None:
+        if len(secret_salt) != 32:
+            raise ValueError("secret_salt must be exactly 32 bytes")
+        raw = hmac.new(secret_salt, raw, hashlib.sha256).digest()
     return base64.b64encode(raw).decode("ascii")
 
 
@@ -122,8 +139,16 @@ def main() -> int:
     sys.stderr.write(f"[audit] {len(nias)} NIA numbers loaded\n")
 
     sys.stderr.write(f"[audit] reading snapshot: {args.snapshot}\n")
-    snapshot_commitments = set(read_column(args.snapshot, "commitment"))
-    sys.stderr.write(f"[audit] {len(snapshot_commitments)} unique commitments in snapshot\n")
+    raw_commitments = read_column(args.snapshot, "commitment")
+    snapshot_commitments = set(raw_commitments)
+    if len(snapshot_commitments) != len(raw_commitments):
+        sys.stderr.write(
+            f"FATAL: snapshot contains {len(raw_commitments) - len(snapshot_commitments)} "
+            "duplicate commitment(s). This should never happen under the UNIQUE constraint; "
+            "the snapshot is corrupt or has been tampered with. Aborting.\n"
+        )
+        return 3
+    sys.stderr.write(f"[audit] {len(snapshot_commitments)} commitments in snapshot (no duplicates)\n")
 
     sys.stderr.write(f"[audit] computing commitments for every official NIA — this is the expensive step\n")
     valid = 0

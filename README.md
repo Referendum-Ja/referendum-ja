@@ -38,13 +38,13 @@ docs/         Cryptographic design, sealed-salt ceremony protocol
 A signature is a `commitment = Argon2id(normalize(NIA), public_salt [|| secret_salt], frozen_params)`.
 
 - **Frozen public parameters** : see [packages/crypto/src/params.ts](packages/crypto/src/params.ts). They MUST never change after launch — any change would invalidate all prior signatures.
-- **Secret salt (Level 2)** : 32 random bytes, Shamir 3-of-5 split between 5 public custodians. Reconstituted only at the end of the collection, in a public ceremony, and only for the Govern's official audit.
+- **Secret salt (Level 2)** : 32 random bytes, Shamir 5-of-7 split between seven public custodians — one per Andorran parish, in homage to the *Armari de les Set Claus* at the [Casa de la Vall](https://www.casadelavall.ad/fr/interior). Applied server-side as an HMAC layer over the client-side Argon2id commitment. Reconstituted only at the end of the collection, in a public ceremony, and only for the Govern's official audit.
 
 The NIA (Número d'Identificació Administrativa) is **never transmitted to the server**. The commitment is computed in the browser via WebAssembly Argon2id.
 
 ## Status
 
-Pre-launch scaffold. See [docs/cryptography.md](docs/cryptography.md) for the full design.
+Live in Level 1 at [noalacord.com](https://noalacord.com). API at `api.noalacord.com`. Level 2 (sealed salt) deployed when the 5-of-7 custodian ceremony has been held. See [docs/cryptography.md](docs/cryptography.md) for the full design.
 
 ## License
 

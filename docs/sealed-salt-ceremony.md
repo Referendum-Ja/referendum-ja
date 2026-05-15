@@ -4,7 +4,11 @@
 
 ## Why this exists
 
-The Level 1 design (public salt only) is vulnerable to any adversary who obtains the official list of Andorran NIAs: they can deanonymise the petition in ~4 CPU-hours. To raise the bar to "infeasible", Level 2 adds a 32-byte **secret salt** that is split between seven public custodians using Shamir Secret Sharing with threshold 5.
+The Level 1 design (public salt only) is vulnerable to any adversary who obtains the official list of Andorran NIAs: they can build a full `NIA → commitment` lookup table in **~45 minutes for under €1** on a single rented server (memory-bandwidth-bound Argon2id is much faster to attack than the earlier docs claimed). To raise the bar to **information-theoretically infeasible**, Level 2 adds a 32-byte **server-side secret salt** that is split between seven public custodians using Shamir Secret Sharing with threshold 5.
+
+**Where the salt enters the pipeline:** the browser computes `Argon2id(NIA, public_salt)` as in Level 1; the Worker applies `HMAC-SHA256(secret_salt, …)` on the received commitment before storing and publishing it. The audit script (`audit/audit.py`) reverses the chain using the reconstituted salt at audit time. The salt is **never** sent to the browser — the browser is trusted by no one.
+
+**Transition note:** switching from Level 1 to Level 2 invalidates deduplication for signatures collected before the switch (their stored values are pre-HMAC). Either deploy Level 2 before opening to the public, or accept a one-time re-hash migration of existing signatures.
 
 While the petition is being collected:
 - The salt is **never** held in full by any single person.
@@ -87,7 +91,7 @@ All seven custodians physically sign each other's receipts so each holds proof o
 base64 -w0 secret-salt.bin | npx wrangler secret put SECRET_SALT_B64
 ```
 
-The Worker now uses the secret salt. A test signature is performed and compared against a Level-2 reference vector (`packages/crypto/tests/fixtures/commitment_vectors_level2.json`, encrypted with the salt's SHA-256 hash so it can be verified without revealing the salt itself).
+The Worker now applies HMAC-SHA256 with this salt to every incoming commitment before storage (see `apps/api/src/utils.ts:applySecretSaltMix`). A test signature is performed and verified end-to-end: the same NIA hashed by `client_commit()` in `audit/audit.py`, then HMAC'd with the same salt, must match what `wrangler d1 execute` returns from the signatures table.
 
 ### 6. Securely destroy the original
 

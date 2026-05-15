@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { sign } from "../lib/sign-client.ts";
+  import { onMount } from "svelte";
+  import { sign, deleteSignature } from "../lib/sign-client.ts";
   import { isValid, normalize } from "@referendum-ja/crypto";
 
   type Labels = {
@@ -16,28 +17,57 @@
     successTitle: string;
     duplicateTitle: string;
     duplicateBody: string;
+    deleteTitle: string;
+    deleteBody: string;
+    deleteCta: string;
+    deleteOk: string;
+    deleteNotFound: string;
   };
 
   let { labels, apiBase, powBits }: { labels: Labels; apiBase: string; powBits: number } = $props();
 
+  let mode = $state<"sign" | "delete">("sign");
   let nia = $state("");
   let initials = $state("");
   let comment = $state("");
   let consent = $state(false);
-  let phase = $state<"idle" | "hashing" | "proof_of_work" | "submitting" | "ok" | "duplicate" | "error">("idle");
+  let phase = $state<
+    "idle" | "hashing" | "proof_of_work" | "submitting" | "ok" | "duplicate" | "deleted" | "not_found" | "error"
+  >("idle");
   let errorMessage = $state("");
   let signatureToken = $state<string | null>(null);
+
+  onMount(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("action") === "delete") mode = "delete";
+  });
 
   let normalised = $derived(normalize(nia));
   let niaValid = $derived(isValid(normalised));
   let busy = $derived(phase === "hashing" || phase === "proof_of_work" || phase === "submitting");
-  let canSubmit = $derived(niaValid && consent && !busy);
+  let canSubmit = $derived(niaValid && !busy && (mode === "delete" || consent));
 
   async function handleSubmit(e: Event) {
     e.preventDefault();
     if (!canSubmit) return;
     phase = "hashing";
     errorMessage = "";
+    if (mode === "delete") {
+      const result = await deleteSignature({ nia, apiBase, powBits }, (p) => {
+        phase = p as typeof phase;
+      });
+      if (result.status === "deleted") phase = "deleted";
+      else if (result.status === "not_found") phase = "not_found";
+      else if (result.status === "rate_limited") {
+        phase = "error";
+        errorMessage = "rate_limited";
+      } else {
+        phase = "error";
+        errorMessage = result.message;
+      }
+      nia = "";
+      return;
+    }
     const result = await sign({ nia, initials, comment, apiBase, powBits }, (p) => {
       phase = p as typeof phase;
     });
@@ -58,8 +88,8 @@
 </script>
 
 <section class="sign">
-  <h1>{labels.title}</h1>
-  <p class="eligibility">{labels.eligibility}</p>
+  <h1>{mode === "delete" ? labels.deleteTitle : labels.title}</h1>
+  <p class="eligibility">{mode === "delete" ? labels.deleteBody : labels.eligibility}</p>
 
   {#if phase === "ok"}
     <div class="success">
@@ -72,6 +102,14 @@
     <div class="duplicate">
       <h2>{labels.duplicateTitle}</h2>
       <p>{labels.duplicateBody}</p>
+    </div>
+  {:else if phase === "deleted"}
+    <div class="success">
+      <h2>{labels.deleteOk}</h2>
+    </div>
+  {:else if phase === "not_found"}
+    <div class="duplicate">
+      <h2>{labels.deleteNotFound}</h2>
     </div>
   {:else}
     <form onsubmit={handleSubmit}>
@@ -91,27 +129,29 @@
         <small class="privacy">🔒 {labels.niaPrivacy}</small>
       </label>
 
-      <label>
-        <span>{labels.initialsLabel}</span>
-        <input type="text" maxlength="4" bind:value={initials} autocomplete="off" />
-      </label>
+      {#if mode === "sign"}
+        <label>
+          <span>{labels.initialsLabel}</span>
+          <input type="text" maxlength="4" bind:value={initials} autocomplete="off" />
+        </label>
 
-      <label>
-        <span>{labels.commentLabel}</span>
-        <textarea maxlength="280" rows="3" bind:value={comment}></textarea>
-        <small>{comment.length} / 280</small>
-      </label>
+        <label>
+          <span>{labels.commentLabel}</span>
+          <textarea maxlength="280" rows="3" bind:value={comment}></textarea>
+          <small>{comment.length} / 280</small>
+        </label>
 
-      <label class="consent">
-        <input type="checkbox" bind:checked={consent} />
-        <span>{labels.rgpdConsent}</span>
-      </label>
+        <label class="consent">
+          <input type="checkbox" bind:checked={consent} />
+          <span>{labels.rgpdConsent}</span>
+        </label>
+      {/if}
 
       <button type="submit" disabled={!canSubmit}>
         {#if phase === "hashing"}Argon2id…
         {:else if phase === "proof_of_work"}Proof-of-work…
         {:else if phase === "submitting"}…
-        {:else}{labels.cta}{/if}
+        {:else}{mode === "delete" ? labels.deleteCta : labels.cta}{/if}
       </button>
 
       <small class="computing">{labels.computingNote}</small>

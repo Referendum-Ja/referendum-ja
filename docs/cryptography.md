@@ -19,37 +19,71 @@ The cardinality of the input space is small (the Andorran citizen body is ≈ 26
 ## Properties
 
 1. **Determinism** — `commit(NIA)` always returns the same value. This is what allows the database `UNIQUE` constraint on `commitment` to act as a deduplicator.
-2. **One-wayness conditional on the input space** — given a commitment, recovering the NIA requires testing candidates from the input space. If the attacker holds the official list (~28 k entries), this takes 4 to 8 CPU-hours on a modern server in Level 1, considerably more in Level 2 (where the secret salt is unknown until the public ceremony).
-3. **Anonymity against the public** — the public ledger contains only commitments. Without the list of NIAs, a brute-force attack must explore the entire format space (10 million combinations × Argon2id ≈ infeasible).
+2. **One-wayness conditional on the input space** — given a commitment, recovering the NIA requires testing candidates. **In Level 1 this is not a hard barrier** for an attacker who holds the official NIA registry (see threat model below). Level 2 closes this gap.
+3. **Anonymity against the public** — the public ledger contains only commitments. The defence depends on the deployment level.
 4. **Verifiability by the Govern** — the Govern holds the list, so it can compute `commit(NIA_i)` for every official NIA and intersect with the published snapshot. The result is a count, not a list.
-5. **Public auditability** — every snapshot is committed to a public Git repository with a Merkle root. Any third party can verify the integrity of the snapshot and re-run the audit if they obtain a list of NIAs (which only the Govern legitimately has).
+5. **Public auditability** — every snapshot is committed to a public Git repository with an RFC 6962 Merkle root (domain-separated leaves and nodes; duplicates rejected). Any third party can verify the integrity of the snapshot.
+
+## Pipeline
+
+There are two layers, and which one is active is a deployment choice:
+
+**Level 1 (current, public-salt only):**
+```
+client:  commitment_b64 = Argon2id(NIA, PUBLIC_SALT, 256 MiB × 4, len=32)  →  POST
+server:  stored = commitment_b64
+```
+
+**Level 2 (after the 5-of-7 custodian ceremony has been held and `SECRET_SALT_B64` is set on the Worker):**
+```
+client:  commitment_b64 = Argon2id(NIA, PUBLIC_SALT, 256 MiB × 4, len=32)  →  POST
+server:  stored = base64( HMAC-SHA256(SECRET_SALT, decode_b64(commitment_b64)) )
+```
+
+The browser never sees the secret salt — it cannot, since the browser is trusted by no one. The Worker applies the HMAC layer **after** receiving the client commitment, and the snapshot publishes the post-HMAC value. At audit time, the Govern's script re-runs the full pipeline (`audit/audit.py` with `--secret-salt`) against the official NIA registry.
 
 ## Threat model
 
-| Adversary | Resources | Anonymity holds? | Why |
-|---|---|---|---|
-| General public | The site, the snapshots, the source code | **Yes** | No access to the NIA list. Brute-forcing 10⁷ NIA candidates through Argon2id (256 MiB × 4) is computationally significant but possible for a determined adversary in Level 1. Level 2 makes it infeasible because the secret salt is unknown. |
-| Journalist with a leaked NIA list | The list + everything above | **Conditional** | In Level 1: 4–8 CPU-hours to deanonymise. In Level 2: infeasible until the secret salt is reconstituted, which requires the cooperation of 5 of the 7 public custodians (one per Andorran parish, in homage to the *Armari de les Set Claus* at the [Casa de la Vall](https://www.casadelavall.ad/fr/interior)), all of whom have committed publicly to release it only at the end of the petition. |
-| Govern d'Andorra | The official list, full legal authority | Anonymity does not hold technically — but the Govern is **bound by APDA law** and by political accountability not to publish individual matches. The system reduces the attack to a procedural one, not a cryptographic one. |
-| Coalition of ≥ 5 custodians + leaked NIA list | The Level-2 secret salt + the list | **No, but loud** | This is the only path to total deanonymisation. It requires a public ceremony breach by 5 named custodians out of 7 + an illegal exfiltration of the official registry. Both events are politically catastrophic and detectable. |
-| Single rogue custodian (or up to 4 colluding) | Up to 4 of 7 shares | **Yes** | Shamir 5-of-7: any subset of 4 or fewer shares leaks no information about the secret. |
+| Adversary | Resources | Anonymity holds in Level 1? | In Level 2? | Why |
+|---|---|---|---|---|
+| General public | site, snapshots, source code | **Practically yes** (brute force the full 10⁷-NIA space costs single-digit days of cloud compute, ~€40–€100; out of reach for casual actors, in reach for motivated ones) | **Yes** (the snapshot is a per-row HMAC keyed by 256-bit unknown salt; brute force is 2²⁵⁶) | See "Brute-force economics" below. |
+| Hostile actor with a leaked NIA registry | list (~28k) + everything above | **No.** ~30–60 wallclock minutes on one rented box (~€1) builds a full lookup table. The 4 CPU-hour figure assumed sequential single-thread, which is wrong for memory-bound Argon2id at this size. | **Yes** until the salt is reconstituted (5-of-7 custodians cooperating publicly at end of petition). | Memory-bandwidth-bound parallelism on commodity DDR5 ≈ 10–15 hashes/s/box. |
+| Govern d'Andorra | the registry, full legal authority | Anonymity does not hold technically. | Same. The Govern can audit the count; it is **legally bound** (APDA law, Llei 29/2021) and politically bound not to publish individual matches. | The cryptography is not a defence against the legitimate registry holder. The legal and political contract is. |
+| Coalition of ≥ 5 custodians + leaked NIA list | the salt + the list | n/a (Level 2 prerequisite) | **No, but loud.** Requires 5 named custodians publicly conspiring + an illegal registry exfiltration. Both events are politically catastrophic and detectable. | This is the only "successful attack" path on Level 2. |
+| Single rogue custodian (or up to 4 colluding) | up to 4 of 7 shares | n/a | **Yes.** Shamir 5-of-7: any subset of 4 or fewer shares leaks no information about the secret. | Information-theoretic property of the SSS scheme. |
+
+## The honest Level 1 statement
+
+Level 1 alone does **not** protect against a hostile actor who holds the NIA registry. The threat is real: a leak of the Servei d'Immigració's registry has happened in other administrations, and we cannot rule it out here. **The defence in Level 1 is therefore primarily legal and political**:
+
+- The Govern is bound by APDA law not to publish individual matches.
+- The registry leak event is a major political and criminal incident on its own, independent of this platform.
+- Until Level 2 is active, signatories should know that the cryptographic anonymity is contingent on the registry remaining under legitimate control.
+
+This is why the project's launch communications need to carry the message: **the credibility of the petition's anonymity ramps up the day the 5-of-7 ceremony takes place**. Until then, the system is honest but not strong against an adversary holding the registry. Once Level 2 is on, the cryptographic defence becomes information-theoretic until the custodians convene.
 
 ## Choice of Argon2id parameters
 
-We targeted ~500 ms on a modern desktop browser. This means ~3–5 s on a low-end smartphone. We consider this acceptable for a single civic act per lifetime.
+We target ~500 ms on a modern desktop browser. This means ~3–5 s on a low-end smartphone. Acceptable for a single civic act per lifetime.
 
 - `time_cost = 4` — minimum recommended for interactive use by the Argon2 authors.
-- `memory_cost = 256 MiB` — the dominant cost; this is what prevents GPU acceleration.
-- `parallelism = 2` — matches the constraints of the WebAssembly Argon2 implementation we use (`hash-wasm`).
-- `hash_length = 32 bytes` — collision probability negligible for input space sizes under 2³² (we are at 10⁷).
+- `memory_cost = 256 MiB` — the dominant cost; bandwidth-bound, not CPU-bound.
+- `parallelism = 2` — matches the constraints of the WebAssembly Argon2 implementation (`hash-wasm`).
+- `hash_length = 32 bytes` — collision probability negligible for input space sizes under 2³² (we are at 10⁷ for the syntactic NIA space, ~28k for the actual registry).
 
-Cost estimate for an attacker with the registry:
+## Brute-force economics
 
-- ~28 000 NIAs × 0.5 s/hash ≈ 14 000 s ≈ 4 CPU-hours per machine.
-- On a 16-core machine with sufficient RAM bandwidth: ~15 min.
-- On a small cluster: minutes.
+Argon2id at `m=256 MiB, t=4, p=2` is memory-bandwidth-bound. On commodity DDR4/DDR5 (50 GB/s), a single rented bare-metal box (≈€100/month) sustains ~10 hashes/s when running multiple in parallel.
 
-This is faster than we would like for Level 1 alone, which is why Level 2 is **strongly recommended** before any significant media exposure. The Level 2 secret salt makes the attack require an additional 2²⁵⁶ effort, which is infeasible.
+| Adversary | Effort | Cost |
+|---|---|---|
+| Journalist with leaked registry (~28k NIAs) | 28k ÷ 10 h/s on one box | **~45 minutes, < €1** |
+| Hostile cluster (10 boxes) | 28k ÷ 100 h/s | **~5 minutes, < €5** |
+| Public adversary, full 10⁷ brute force | 10⁷ ÷ 10 h/s, one box | **~11.6 days, ~€40 cloud spot** |
+| Public adversary, full 10⁷, 100-box fleet | 10⁷ ÷ 1000 h/s | **~2.8 hours, ~€100** |
+| State-level with registry | 28k × HMAC + Argon2id | minutes, ~€0 |
+
+These numbers correct the earlier draft of this document, which framed Level 1 brute force as "infeasible". It is not. **Hardening cryptographically against a registry-holder is what Level 2 does, and Level 2 is the priority before any significant media exposure.**
 
 ## Normalisation
 
@@ -68,6 +102,11 @@ After normalisation, the NIA must match `/^[0-9]{6}[A-Z]$/`. Inputs that fail th
 The secret salt is 32 random bytes, generated once on an air-gapped machine, split into 7 Shamir shares with threshold 5, and distributed to seven public custodians — one per Andorran parish, in homage to the *Armari de les Set Claus* at the [Casa de la Vall](https://www.casadelavall.ad/fr/interior), the historical seven-locked cabinet of the national archives. The ceremony is filmed; the shares are physical (USB key + paper backup, sealed in tamper-evident envelopes).
 
 The Worker loads the secret salt from a sealed Wrangler secret (`SECRET_SALT_B64`), set once and never rotated. Rotation is impossible by design: rotating the salt would invalidate every prior commitment.
+
+**Where the salt enters the pipeline (important):** it is applied *server-side* as an HMAC-SHA256 over the client's Argon2id commitment (see `apps/api/src/utils.ts:applySecretSaltMix`). It is **not** included in the Argon2id `salt` argument, because the browser cannot know it. This means:
+
+- Before the salt is set, the stored commitments are equal to the client commitments. Once the salt is set, all future commitments are HMAC'd with it. **Switching from Level 1 to Level 2 invalidates the deduplication continuity for any prior signatures**: a person who signed in Level 1 and tries to re-sign in Level 2 will produce a different `stored` value and bypass the UNIQUE check. **Plan the transition accordingly: either deploy Level 2 before opening to the public, or accept a one-time re-hash migration.**
+- At audit time, the Govern's script (`audit/audit.py`) recomputes the same chain: Argon2id over each official NIA, then HMAC with the reconstituted salt. The expected snapshot match equals the count of valid signatures.
 
 ## What this design does *not* protect against
 

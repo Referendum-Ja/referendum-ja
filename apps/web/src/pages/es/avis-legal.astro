@@ -24,9 +24,10 @@ import Base from "../../layouts/Base.astro";
   <p>Tienes derecho de acceso, rectificación y supresión. Para ejercerlos, debes poder demostrar que eres el titular del NIA correspondiente. Procedimiento:</p>
   <ol>
     <li>Ve a <a href="/es/signar?action=delete">/es/signar?action=delete</a>.</li>
-    <li>Introduce tu NIA en el formulario (recalculamos el compromiso localmente).</li>
-    <li>Si el compromiso resultante existe en la base, se suprime. Tu NIA no se transmite en ningún momento.</li>
+    <li>Introduce tu NIA en el formulario (recalculamos el compromiso localmente en tu dispositivo).</li>
+    <li>Si el compromiso resultante existe en la base, se suprime inmediatamente. Tu NIA no se transmite en ningún momento.</li>
   </ol>
+  <p><small>Nota técnica: la supresión crea un hueco en el historial Merkle del próximo snapshot diario. Este hueco es visible en el repositorio público de archivos, pero no permite identificar la firma suprimida.</small></p>
 
   <h2>APDA</h2>
   <p>Puedes presentar una reclamación ante la <strong>Agència Andorrana de Protecció de Dades</strong> (APDA), Edifici Administratiu de l'Obac, AD700 Escaldes-Engordany, <a href="https://www.apda.ad">apda.ad</a>.</p>

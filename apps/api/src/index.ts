@@ -9,11 +9,19 @@ import type { Env } from "./env.ts";
 
 const app = new Hono<{ Bindings: Env }>();
 
+// CORS limited to the production origins. Local dev (port 4321) added for
+// development convenience; remove or env-gate if you fork for another deploy.
+const ALLOWED_ORIGINS = new Set([
+  "https://noalacord.com",
+  "https://www.noalacord.com",
+  "http://localhost:4321",
+]);
+
 app.use(
   "/api/*",
   cors({
-    origin: (origin) => origin,
-    allowMethods: ["GET", "POST", "OPTIONS"],
+    origin: (origin) => (ALLOWED_ORIGINS.has(origin) ? origin : null),
+    allowMethods: ["GET", "POST", "DELETE", "OPTIONS"],
     allowHeaders: ["Content-Type"],
     maxAge: 86400,
   }),

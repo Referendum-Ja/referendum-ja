@@ -24,6 +24,12 @@ export type SignResult =
   | { status: "rate_limited" }
   | { status: "error"; code: string; message: string };
 
+export type DeleteResult =
+  | { status: "deleted" }
+  | { status: "not_found" }
+  | { status: "rate_limited" }
+  | { status: "error"; code: string; message: string };
+
 export async function sign(input: SignInput, onProgress?: (phase: string) => void): Promise<SignResult> {
   onProgress?.("hashing");
   let commitmentB64: string;
@@ -54,6 +60,42 @@ export async function sign(input: SignInput, onProgress?: (phase: string) => voi
     return { status: "ok", signatureToken: body.signature_token ?? null };
   }
   if (res.status === 409) return { status: "duplicate" };
+  if (res.status === 429) return { status: "rate_limited" };
+  const body = await res.text();
+  return { status: "error", code: String(res.status), message: body };
+}
+
+export type DeleteInput = {
+  nia: string;
+  apiBase: string;
+  powBits: number;
+};
+
+export async function deleteSignature(
+  input: DeleteInput,
+  onProgress?: (phase: string) => void,
+): Promise<DeleteResult> {
+  onProgress?.("hashing");
+  let commitmentB64: string;
+  try {
+    commitmentB64 = await commit(input.nia);
+  } catch (e) {
+    const message = e instanceof Error ? e.message : String(e);
+    return { status: "error", code: "invalid_nia", message };
+  }
+
+  onProgress?.("proof_of_work");
+  const nonce = await minePoW(commitmentB64, input.powBits);
+
+  onProgress?.("submitting");
+  const res = await fetch(`${input.apiBase}/api/sign`, {
+    method: "DELETE",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ commitment: commitmentB64, pow_nonce: nonce }),
+  });
+
+  if (res.status === 200) return { status: "deleted" };
+  if (res.status === 404) return { status: "not_found" };
   if (res.status === 429) return { status: "rate_limited" };
   const body = await res.text();
   return { status: "error", code: String(res.status), message: body };

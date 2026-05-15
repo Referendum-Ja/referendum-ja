@@ -62,6 +62,41 @@ export function b64ToBytes(s: string): Uint8Array {
   return out;
 }
 
+export function bytesToB64(bytes: Uint8Array): string {
+  let bin = "";
+  for (const b of bytes) bin += String.fromCharCode(b);
+  return btoa(bin);
+}
+
+// Applies the Level-2 server-side HMAC layer to a client-side Argon2id
+// commitment. Without the secret salt, no party — including someone holding
+// the official NIA registry — can brute-force the snapshot.
+//
+// stored = base64( HMAC-SHA256(secret_salt_bytes, decode_b64(client_commitment)) )
+//
+// At audit time, the Govern recomputes the same chain with the salt
+// reconstituted from the 5-of-7 custodian ceremony.
+export async function applySecretSaltMix(
+  clientCommitmentB64: string,
+  secretSaltB64: string | undefined,
+): Promise<string> {
+  if (!secretSaltB64) return clientCommitmentB64;
+  const saltBytes = b64ToBytes(secretSaltB64);
+  if (saltBytes.length !== 32) {
+    throw new Error("SECRET_SALT_B64 must decode to exactly 32 bytes");
+  }
+  const commitmentBytes = b64ToBytes(clientCommitmentB64);
+  const key = await crypto.subtle.importKey(
+    "raw",
+    saltBytes.buffer as ArrayBuffer,
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"],
+  );
+  const out = await crypto.subtle.sign("HMAC", key, commitmentBytes.buffer as ArrayBuffer);
+  return bytesToB64(new Uint8Array(out));
+}
+
 // Lightweight client proof-of-work check: HMAC-free, just verify that
 // SHA-256(commitment || nonce) has the requested number of leading zero bits.
 // This is a cheap anti-spam trick; it does not need to be cryptographically

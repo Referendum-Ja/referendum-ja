@@ -21,7 +21,17 @@ export const ARGON2ID_PARAMS = {
 
 // When null the system is in Level 1 (public-salt only).
 // When set (32 random bytes, base64-encoded) the system is in Level 2 with a
-// Shamir 3-of-5 sealed salt held by 5 public custodians.
+// Shamir 5-of-7 sealed salt held by seven public custodians — one per Andorran
+// parish, in homage to the Armari de les Set Claus at the Casa de la Vall.
+//
+// IMPORTANT — Level 2 architecture:
+// The secret salt is NEVER used by the browser. It is applied server-side as
+// an HMAC-SHA256 over the client-side Argon2id commitment, producing the
+// stored commitment. The Govern's audit script applies the same HMAC after
+// recomputing Argon2id over the official NIA registry. The result: anyone
+// without the secret salt — including someone holding the registry — cannot
+// brute-force the snapshot during collection.
+//
 // In production this is loaded from a Workers secret binding; in tests it is
 // null. The audit script accepts the secret salt as a CLI argument.
 export type SecretSalt = Uint8Array | null;
