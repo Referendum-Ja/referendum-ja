@@ -1,0 +1,29 @@
+{
+  "name": "@referendum-ja/web",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Astro frontend for ReferendumJa",
+  "license": "AGPL-3.0-or-later",
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "test": "vitest run --passWithNoTests",
+    "test:e2e": "playwright test",
+    "lint": "astro check"
+  },
+  "dependencies": {
+    "@astrojs/svelte": "^6.0.0",
+    "@referendum-ja/crypto": "workspace:*",
+    "astro": "^4.16.0",
+    "hash-wasm": "^4.12.0",
+    "svelte": "^5.0.0"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.0",
+    "@playwright/test": "^1.48.0",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0"
+  }
+}

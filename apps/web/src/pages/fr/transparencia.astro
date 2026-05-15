@@ -1,0 +1,39 @@
+---
+import Base from "../../layouts/Base.astro";
+
+const apiBase = import.meta.env.PUBLIC_API_BASE ?? "https://api.noalacord.com";
+---
+<Base title="Transparence · ReferendumJa" locale="fr">
+  <h1>Transparence en temps réel</h1>
+  <p>Toutes les valeurs de cette page sont dérivées directement de la base de données publique. Les <em>snapshots</em> quotidiens signés permettent de reproduire le comptage à tout moment.</p>
+
+  <section id="live" data-api-base={apiBase}>
+    <div class="metric"><strong id="total">…</strong> signatures vérifiées</div>
+    <div class="metric"><strong id="last24">…</strong> ces dernières 24 heures</div>
+  </section>
+
+  <h2>Dernier snapshot signé</h2>
+  <div id="snapshot">Chargement…</div>
+
+  <h2>Archive</h2>
+  <p>Chaque jour à 03:00 UTC, un <em>snapshot</em> CSV est publié sur le dépôt public d'archives et signé par une Merkle root. L'historique Git sert de registre d'audit.</p>
+  <p><a href="https://github.com/Referendum-Ja/referendum-ja-archives">Voir l'archive →</a></p>
+
+  <script is:inline type="module">
+    const api = document.getElementById("live").dataset.apiBase;
+    fetch(api + "/api/stats").then(r => r.json()).then(s => {
+      document.getElementById("total").textContent = s.total.toLocaleString("fr-FR");
+      document.getElementById("last24").textContent = "+" + s.last_24h.toLocaleString("fr-FR");
+      const snap = s.last_snapshot;
+      const el = document.getElementById("snapshot");
+      if (!snap) { el.textContent = "Aucun snapshot pour le moment."; return; }
+      el.innerHTML = `<code>${snap.date}</code> · ${snap.total_count.toLocaleString("fr-FR")} signatures · Merkle <code>${snap.merkle_root.slice(0,16)}…</code>`;
+    }).catch(() => {});
+  </script>
+</Base>
+
+<style>
+  .metric { font-size: 1.4rem; margin: 0.5rem 0; }
+  .metric strong { font-size: 2rem; font-weight: 800; }
+  code { background: #f0f0f0; padding: 0.1rem 0.4rem; border-radius: 3px; }
+</style>

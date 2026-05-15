@@ -1,0 +1,60 @@
+---
+import { getLabels, type Locale } from "../content/i18n.ts";
+
+interface Props {
+  title: string;
+  locale: Locale;
+}
+const { title, locale } = Astro.props;
+const labels = getLabels(locale).nav;
+const otherLocales = (["ca", "fr", "es"] as Locale[]).filter((l) => l !== locale);
+const path = Astro.url.pathname.replace(/^\/(ca|fr|es)/, "");
+---
+<!doctype html>
+<html lang={locale}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="referrer" content="no-referrer" />
+    <title>{title}</title>
+    <link rel="icon" href="/favicon.svg" />
+  </head>
+  <body>
+    <header>
+      <nav>
+        <a href={`/${locale === "ca" ? "" : locale + "/"}`}>ReferendumJa</a>
+        <ul>
+          <li><a href={`/${locale === "ca" ? "" : locale + "/"}`}>{labels.home}</a></li>
+          <li><a href={`/${locale === "ca" ? "" : locale + "/"}com-funciona`}>{labels.how}</a></li>
+          <li><a href={`/${locale === "ca" ? "" : locale + "/"}transparencia`}>{labels.transparency}</a></li>
+          <li><a href={`/${locale === "ca" ? "" : locale + "/"}verificacio`}>{labels.verification}</a></li>
+          <li><a href={`/${locale === "ca" ? "" : locale + "/"}avis-legal`}>{labels.legal}</a></li>
+          <li><a href="https://github.com/Referendum-Ja/referendum-ja">{labels.github}</a></li>
+        </ul>
+        <div class="locales">
+          {otherLocales.map((l) => (
+            <a href={`/${l === "ca" ? "" : l + "/"}${path.replace(/^\//, "")}`}>{l.toUpperCase()}</a>
+          ))}
+        </div>
+      </nav>
+    </header>
+    <main>
+      <slot />
+    </main>
+    <footer>
+      <p>ReferendumJa · AGPL-3.0 · <a href="https://github.com/Referendum-Ja/referendum-ja">GitHub</a></p>
+    </footer>
+    <style is:global>
+      :root { --max: 56rem; }
+      body { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; margin: 0; color: #111; background: #fafafa; }
+      header { background: #fff; border-bottom: 1px solid #ddd; }
+      nav { max-width: var(--max); margin: 0 auto; padding: 1rem; display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+      nav > a { font-weight: 800; text-decoration: none; color: #111; }
+      nav ul { display: flex; gap: 1rem; list-style: none; padding: 0; margin: 0; }
+      nav ul a { color: #444; text-decoration: none; }
+      .locales { margin-left: auto; display: flex; gap: 0.5rem; font-size: 0.85rem; }
+      main { max-width: var(--max); margin: 0 auto; padding: 2rem 1rem; }
+      footer { text-align: center; padding: 2rem 1rem; color: #777; font-size: 0.85rem; }
+    </style>
+  </body>
+</html>

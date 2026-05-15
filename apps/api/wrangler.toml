@@ -1,0 +1,30 @@
+name = "referendum-ja-api"
+main = "src/index.ts"
+compatibility_date = "2026-05-01"
+compatibility_flags = ["nodejs_compat"]
+
+# Disable Cloudflare's default request logging. Logs are minimal and IPs are
+# hashed with a daily rotating salt server-side; we do not need CF analytics.
+[observability]
+enabled = false
+
+# Cron: generate the daily snapshot at 03:00 UTC.
+[triggers]
+crons = ["0 3 * * *"]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "referendum-ja"
+database_id = "<PENDING: create with `wrangler d1 create referendum-ja` and paste the id here>"
+
+# Secrets (set with `wrangler secret put <name>`):
+#   IP_HASH_SALT          — 32-byte base64, rotated daily by the cron worker
+#   SIGNATURE_TOKEN_HMAC  — 32-byte base64, used to sign autonomous signature tokens
+#   SECRET_SALT_B64       — Level-2 sealed salt (only set after the custodian ceremony)
+#   ARCHIVE_GITHUB_TOKEN  — fine-grained PAT scoped to the archives repo only
+
+[vars]
+PUBLIC_SALT = "petitio-referendum-andorra-2026-v1"
+RATE_LIMIT_WINDOW_SECONDS = "3600"
+RATE_LIMIT_MAX = "5"
+POW_BITS = "18"

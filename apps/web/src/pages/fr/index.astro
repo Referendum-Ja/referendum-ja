@@ -1,0 +1,40 @@
+---
+import Base from "../../layouts/Base.astro";
+import Counter from "../../components/Counter.svelte";
+import petition from "../../content/petition.fr.md?raw";
+import { getLabels } from "../../content/i18n.ts";
+
+const apiBase = import.meta.env.PUBLIC_API_BASE ?? "https://api.noalacord.com";
+const labels = getLabels("fr");
+
+function renderPetition(markdown: string): string {
+  return markdown
+    .replace(/<!--[\s\S]*?-->/g, "")
+    .split(/\n\n+/)
+    .map((p) => {
+      const trimmed = p.trim();
+      if (!trimmed) return "";
+      if (trimmed.startsWith("# ")) return `<h1>${trimmed.slice(2)}</h1>`;
+      return `<p>${trimmed.replace(/\n/g, "<br/>")}</p>`;
+    })
+    .join("\n");
+}
+const html = renderPetition(petition);
+---
+<Base title="ReferendumJa" locale="fr">
+  <section class="hero">
+    <Counter client:load apiBase={apiBase} label={labels.counter.label} />
+    <a href="/fr/signar" class="cta">Signer la pétition →</a>
+    <p class="sub"><a href="/fr/com-funciona">Comment votre vie privée est-elle garantie ?</a></p>
+  </section>
+
+  <article class="petition" set:html={html}></article>
+</Base>
+
+<style>
+  .hero { text-align: center; padding: 2rem 0 1rem; }
+  .cta { display: inline-block; padding: 0.9rem 1.6rem; background: #111; color: #fff;
+         text-decoration: none; border-radius: 4px; font-weight: 700; }
+  .sub { margin-top: 0.5rem; font-size: 0.9rem; }
+  .petition { margin-top: 3rem; line-height: 1.6; max-width: 40rem; margin-left: auto; margin-right: auto; }
+</style>

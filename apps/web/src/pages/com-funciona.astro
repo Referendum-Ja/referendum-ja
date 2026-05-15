@@ -1,0 +1,52 @@
+---
+import Base from "../layouts/Base.astro";
+---
+<Base title="Com funciona · ReferendumJa" locale="ca">
+  <article class="explain">
+    <h1>Com aquesta petició garanteix el teu anonimat tot sent verificable</h1>
+    <p class="lead">Un sistema en què l'organitzador no veu cap nom, en què ningú no pot saber qui ha signat, però en què el Govern pot comptar el nombre de signatures legítimes.</p>
+
+    <h2>El problema en dues frases</h2>
+    <p>A change.org, qualsevol pot signar diverses vegades o amb un nom fals. El Govern té raó quan diu que aquestes signatures no són verificables. Aquesta plataforma resol el problema.</p>
+
+    <h2>Una metàfora</h2>
+    <p>Imagina una urna transparent on cada ciutadà diposita un sobre segellat amb un segell personal únic, derivat del seu NIA però impossible d'invertir. L'organitzador veu el nombre de sobres. Ningú no pot obrir un sobre. Però el Govern, que té la llista de tots els segells possibles (perquè coneix tots els NIA assignats), pot comptar quants sobres porten un segell vàlid.</p>
+
+    <h2>Per què el NIA i no el número de passaport?</h2>
+    <p>El NIA (Número d'Identificació Administrativa) és l'identificador <strong>persistent</strong> dels ciutadans andorrans. A diferència del número de passaport — que canvia cada vegada que renoves el document — el NIA t'acompanya tota la vida. Aquesta persistència és essencial perquè la deduplicació funcioni: si una persona signa el dia 1 i renova el passaport el dia 20, ha de produir el mateix segell. El NIA, present al teu passaport i al teu DNI, garanteix aquesta estabilitat.</p>
+
+    <h2>Què veu l'organitzador</h2>
+    <p>Un comptador, inicials opcionals, comentaris públics. <strong>Res més.</strong> Cap nom. Cap NIA. Cap adreça IP en clar.</p>
+
+    <h2>Què veu el Govern</h2>
+    <p>Exactament el mateix que tothom a la pàgina de transparència. <strong>A més</strong>, si decideix dur a terme la verificació: un nombre, i només un nombre, que indica quantes signatures corresponen a NIA de ciutadans andorrans reals.</p>
+
+    <h2>Què no veu el Govern</h2>
+    <p>Qui ha signat. El càlcul de verificació produeix un nombre, no una llista de noms.</p>
+
+    <h2>Per què cinc dipositaris</h2>
+    <p>L'anonimat no depèn d'una única entitat: a la versió de protecció reforçada del sistema, una clau secreta és <strong>partida en cinc fragments</strong> i confiada a cinc persones públiques i independents. Cal reunir-ne tres sobre cinc per reconstituir la clau. Aquest disseny protegeix contra <strong>les pressions polítiques</strong>: cap actor sol — ni govern, ni partit, ni periodista, ni adversari — no pot identificar els signants. Calen tres dipositaris cooperatius alhora, i aquests s'han compromès públicament a no fer-ho fins al final de la recollida.</p>
+
+    <h2>Honestedat tècnica</h2>
+    <p>El codi és públic. Qualsevol investigador pot auditar-lo. La promesa d'anonimat reposa sobre tres pilars:</p>
+    <ul>
+      <li><strong>Criptogràfic</strong> : la funció de derivació (Argon2id) és deliberadament lenta, cosa que fa costosa qualsevol temptativa de desanonimització.</li>
+      <li><strong>Criptogràfic reforçat (Nivell 2)</strong> : la clau secreta repartida entre cinc dipositaris fa que la desanonimització sigui impossible mentre dura la recollida, fins i tot per a algú que disposi de la llista dels NIA andorrans.</li>
+      <li><strong>Polític i jurídic</strong> : el Govern, que posseeix la llista dels NIA vàlids, és l'únic actor capaç d'invertir la funció. Està obligat per la llei andorrana i per l'APDA a no fer-ho fora del procediment de verificació consentida.</li>
+    </ul>
+
+    <aside class="warn">
+      <h3>Límit honest</h3>
+      <p>Cap sistema no és perfecte. Si la llista completa dels NIA andorrans fos divulgada públicament <em>i</em> el secret dels cinc dipositaris fos compromès simultàniament, qualsevol podria desanonimitzar aquesta petició. Aquesta plataforma no protegeix contra una compromissió simultània d'aquests dos elements, que constituiria un esdeveniment polític i jurídic major, no pas criptogràfic.</p>
+    </aside>
+
+    <p><a href="/verificacio">Anar al protocol d'auditoria tècnica →</a></p>
+  </article>
+</Base>
+
+<style>
+  .explain { line-height: 1.7; max-width: 42rem; margin: 0 auto; }
+  .lead { font-size: 1.15rem; color: #333; }
+  h2 { margin-top: 2.5rem; }
+  .warn { border-left: 4px solid #c80; background: #fff8e6; padding: 1rem 1.2rem; margin-top: 2rem; border-radius: 0 6px 6px 0; }
+</style>

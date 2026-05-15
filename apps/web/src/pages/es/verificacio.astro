@@ -1,0 +1,41 @@
+---
+import Base from "../../layouts/Base.astro";
+---
+<Base title="Verificación · ReferendumJa" locale="es">
+  <h1>Protocolo de auditoría</h1>
+  <p>Esta página está destinada al Govern, a los periodistas y a los investigadores independientes que quieren verificar la legitimidad de las firmas sin depender del organizador.</p>
+
+  <h2>1. Recuperar el snapshot</h2>
+  <p>Descarga el CSV del día que quieres verificar desde el <a href="https://github.com/Referendum-Ja/referendum-ja-archives">repositorio de archivos</a>. Cada CSV tiene una Merkle root asociada. Reconstruye la root localmente y compárala con la publicada para verificar la integridad.</p>
+
+  <h2>2. Verificar la integridad (Merkle)</h2>
+  <pre><code>python3 audit/verify_merkle.py snapshots/2026-05-15.csv</code></pre>
+
+  <h2>3. Auditoría gubernamental</h2>
+  <p>Este paso requiere acceso a la lista oficial de los NIA de los ciudadanos andorranos, que <strong>solo el Govern</strong> posee. El script funciona <em>air-gapped</em> (sin conexión de red) y produce un informe reproducible.</p>
+  <pre><code># Cargar el contenedor air-gapped en la máquina segura del Govern
+docker load &lt; referendum-ja-audit.tar
+docker run --network=none --rm -v $PWD:/work referendum-ja-audit \
+  /work/nia-official.csv /work/snapshot-2026-05-15.csv</code></pre>
+  <p>El script produce:</p>
+  <ul>
+    <li>El número de firmas válidas (compromisos correspondientes a un NIA andorrano real).</li>
+    <li>El número de firmas inválidas (compromisos sin correspondencia, p. ej. NIA de extranjeros residentes o errores de formato).</li>
+    <li>Una salida firmable que el Govern puede publicar, sin revelar ninguna correspondencia individual.</li>
+  </ul>
+
+  <h2>Código y descargas</h2>
+  <ul>
+    <li><a href="https://github.com/Referendum-Ja/referendum-ja">Código fuente (AGPL-3.0)</a></li>
+    <li><a href="https://github.com/Referendum-Ja/referendum-ja/releases">Versión sellada y firmada GPG</a></li>
+    <li><a href="https://github.com/Referendum-Ja/referendum-ja-archives">Archivo de snapshots</a></li>
+  </ul>
+
+  <h2>Vectores de referencia</h2>
+  <p>Los vectores criptográficos de referencia se publican en <code>packages/crypto/tests/fixtures/commitment_vectors.json</code>. Cualquier implementación independiente debe producir exactamente esos valores para ser considerada compatible.</p>
+</Base>
+
+<style>
+  pre { background: #f4f4f4; padding: 0.8rem; border-radius: 4px; overflow-x: auto; }
+  code { font-family: ui-monospace, "SF Mono", Menlo, monospace; }
+</style>

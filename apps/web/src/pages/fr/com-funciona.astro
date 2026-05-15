@@ -1,0 +1,52 @@
+---
+import Base from "../../layouts/Base.astro";
+---
+<Base title="Comment ça marche · ReferendumJa" locale="fr">
+  <article class="explain">
+    <h1>Comment cette pétition garantit votre anonymat tout en étant vérifiable</h1>
+    <p class="lead">Un système où l'organisateur ne voit aucun nom, où personne ne peut savoir qui a signé, mais où le Govern peut compter le nombre de signatures légitimes.</p>
+
+    <h2>Le problème en deux phrases</h2>
+    <p>Sur change.org, n'importe qui peut signer plusieurs fois ou avec un faux nom. Le Govern a raison de dire que ces signatures ne sont pas vérifiables. Cette plateforme résout le problème.</p>
+
+    <h2>Une métaphore</h2>
+    <p>Imaginez une urne transparente dans laquelle chaque citoyen dépose une enveloppe scellée portant un sceau personnel unique, dérivé de son NIA mais impossible à inverser. L'organisateur voit le nombre d'enveloppes. Personne ne peut ouvrir une enveloppe. Mais le Govern, qui possède la liste de tous les sceaux possibles (puisqu'il connaît tous les NIA attribués), peut compter combien d'enveloppes portent un sceau valide.</p>
+
+    <h2>Pourquoi le NIA et non le numéro de passeport ?</h2>
+    <p>Le NIA (Número d'Identificació Administrativa) est l'identifiant <strong>persistant</strong> des citoyens andorrans. À la différence du numéro de passeport — qui change à chaque renouvellement — le NIA vous accompagne toute votre vie. Cette persistance est essentielle pour que la déduplication fonctionne : si une personne signe le jour 1 et renouvelle son passeport le jour 20, elle doit produire le même sceau. Le NIA, présent sur votre passeport et sur votre DNI, garantit cette stabilité.</p>
+
+    <h2>Ce que voit l'organisateur</h2>
+    <p>Un compteur, des initiales optionnelles, des commentaires publics. <strong>Rien d'autre.</strong> Aucun nom. Aucun NIA. Aucune adresse IP en clair.</p>
+
+    <h2>Ce que voit le Govern</h2>
+    <p>Exactement la même chose que tout le monde sur la page de transparence. <strong>En plus</strong>, s'il décide de procéder à la vérification : un nombre, et un nombre seulement, indiquant combien de signatures correspondent à des NIA de citoyens andorrans réels.</p>
+
+    <h2>Ce que le Govern ne voit pas</h2>
+    <p>Qui a signé. Le calcul de vérification produit un nombre, pas une liste de noms.</p>
+
+    <h2>Pourquoi cinq dépositaires</h2>
+    <p>L'anonymat ne dépend pas d'une seule entité : dans la version de protection renforcée du système, une clé secrète est <strong>partagée en cinq fragments</strong> et confiée à cinq personnes publiques et indépendantes. Il faut en réunir trois sur cinq pour reconstituer la clé. Ce design protège contre <strong>les pressions politiques</strong> : aucun acteur seul — gouvernement, parti, journaliste, adversaire — ne peut identifier les signataires. Il faut trois dépositaires coopérants en même temps, et ceux-ci se sont publiquement engagés à ne le faire qu'à la fin de la collecte.</p>
+
+    <h2>Honnêteté technique</h2>
+    <p>Le code est public. Tout chercheur peut l'auditer. La promesse d'anonymat repose sur trois piliers :</p>
+    <ul>
+      <li><strong>Cryptographique</strong> : la fonction de dérivation (Argon2id) est délibérément lente, ce qui rend coûteuse toute tentative de désanonymisation.</li>
+      <li><strong>Cryptographique renforcé (Niveau 2)</strong> : la clé secrète partagée entre cinq dépositaires rend la désanonymisation impossible pendant la collecte, même pour quelqu'un disposant de la liste des NIA andorrans.</li>
+      <li><strong>Politique et juridique</strong> : le Govern, qui possède la liste des NIA valides, est le seul acteur capable d'inverser la fonction. Il est tenu par la loi andorrane et par l'APDA de ne pas le faire en dehors de la procédure de vérification consentie.</li>
+    </ul>
+
+    <aside class="warn">
+      <h3>Limite honnête</h3>
+      <p>Aucun système n'est parfait. Si la liste complète des NIA andorrans fuitait publiquement <em>et</em> que le secret des cinq dépositaires était simultanément compromis, n'importe qui pourrait désanonymiser cette pétition. Cette plateforme ne protège pas contre une compromission simultanée de ces deux éléments, qui constituerait un événement politique et juridique majeur, pas cryptographique.</p>
+    </aside>
+
+    <p><a href="/fr/verificacio">Voir le protocole d'audit technique →</a></p>
+  </article>
+</Base>
+
+<style>
+  .explain { line-height: 1.7; max-width: 42rem; margin: 0 auto; }
+  .lead { font-size: 1.15rem; color: #333; }
+  h2 { margin-top: 2.5rem; }
+  .warn { border-left: 4px solid #c80; background: #fff8e6; padding: 1rem 1.2rem; margin-top: 2rem; border-radius: 0 6px 6px 0; }
+</style>

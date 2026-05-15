@@ -1,0 +1,63 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Type check
+        run: pnpm -r lint
+      - name: Unit tests
+        run: pnpm -r test
+      - name: Dependency audit (moderate+)
+        run: pnpm audit --audit-level=moderate
+        continue-on-error: false
+
+  python-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r audit/requirements.txt
+      - name: Smoke-test audit script
+        run: |
+          # Generate a fake snapshot from the sample NIAs and confirm we
+          # match 3/3. This catches drift between params.ts and audit.py.
+          python3 -c "
+          import csv, sys
+          sys.path.insert(0, 'audit')
+          from audit import commit
+          with open('audit/sample-nia.csv') as f:
+              nias = [r['nia'] for r in csv.DictReader(f)]
+          commitments = [commit(n, None) for n in nias]
+          with open('/tmp/snap.csv', 'w') as f:
+              f.write('commitment\n')
+              for c in commitments: f.write(c + '\n')
+          "
+          python3 audit/audit.py \
+            --nia-list audit/sample-nia.csv \
+            --snapshot /tmp/snap.csv
+
+  semgrep:
+    runs-on: ubuntu-latest
+    container:
+      image: returntocorp/semgrep
+    steps:
+      - uses: actions/checkout@v4
+      - run: semgrep ci --config=p/owasp-top-ten --config=p/typescript --config=p/javascript

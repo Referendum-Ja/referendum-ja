@@ -1,0 +1,12 @@
+---
+import Base from "../../layouts/Base.astro";
+import SignForm from "../../components/SignForm.svelte";
+import { getLabels } from "../../content/i18n.ts";
+
+const apiBase = import.meta.env.PUBLIC_API_BASE ?? "https://api.noalacord.com";
+const powBits = Number(import.meta.env.PUBLIC_POW_BITS ?? "18");
+const labels = getLabels("fr").sign;
+---
+<Base title="Signer · ReferendumJa" locale="fr">
+  <SignForm client:load labels={labels} apiBase={apiBase} powBits={powBits} />
+</Base>

@@ -1,0 +1,27 @@
+{
+  "name": "@referendum-ja/api",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Cloudflare Workers API for ReferendumJa",
+  "license": "AGPL-3.0-or-later",
+  "type": "module",
+  "main": "src/index.ts",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "test": "vitest run --passWithNoTests",
+    "lint": "tsc --noEmit",
+    "migrate:local": "wrangler d1 migrations apply referendum-ja --local",
+    "migrate:remote": "wrangler d1 migrations apply referendum-ja --remote"
+  },
+  "dependencies": {
+    "@referendum-ja/crypto": "workspace:*",
+    "hono": "^4.6.0"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20250101.0",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0",
+    "wrangler": "^3.90.0"
+  }
+}

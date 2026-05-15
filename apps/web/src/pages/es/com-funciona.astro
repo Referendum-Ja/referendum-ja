@@ -1,0 +1,52 @@
+---
+import Base from "../../layouts/Base.astro";
+---
+<Base title="Cómo funciona · ReferendumJa" locale="es">
+  <article class="explain">
+    <h1>Cómo esta petición garantiza tu anonimato siendo verificable</h1>
+    <p class="lead">Un sistema en el que el organizador no ve ningún nombre, en el que nadie puede saber quién ha firmado, pero en el que el Govern puede contar el número de firmas legítimas.</p>
+
+    <h2>El problema en dos frases</h2>
+    <p>En change.org, cualquiera puede firmar varias veces o con un nombre falso. El Govern tiene razón cuando dice que esas firmas no son verificables. Esta plataforma resuelve el problema.</p>
+
+    <h2>Una metáfora</h2>
+    <p>Imagina una urna transparente en la que cada ciudadano deposita un sobre sellado con un sello personal único, derivado de su NIA pero imposible de invertir. El organizador ve el número de sobres. Nadie puede abrir un sobre. Pero el Govern, que tiene la lista de todos los sellos posibles (porque conoce todos los NIA asignados), puede contar cuántos sobres llevan un sello válido.</p>
+
+    <h2>¿Por qué el NIA y no el número de pasaporte?</h2>
+    <p>El NIA (Número d'Identificació Administrativa) es el identificador <strong>persistente</strong> de los ciudadanos andorranos. A diferencia del número de pasaporte —que cambia cada vez que se renueva el documento— el NIA te acompaña toda la vida. Esta persistencia es esencial para que la deduplicación funcione: si una persona firma el día 1 y renueva el pasaporte el día 20, debe producir el mismo sello. El NIA, presente en tu pasaporte y en tu DNI, garantiza esta estabilidad.</p>
+
+    <h2>Qué ve el organizador</h2>
+    <p>Un contador, iniciales opcionales, comentarios públicos. <strong>Nada más.</strong> Ningún nombre. Ningún NIA. Ninguna dirección IP en claro.</p>
+
+    <h2>Qué ve el Govern</h2>
+    <p>Exactamente lo mismo que todo el mundo en la página de transparencia. <strong>Además</strong>, si decide proceder con la verificación: un número, y solo un número, que indica cuántas firmas corresponden a NIA de ciudadanos andorranos reales.</p>
+
+    <h2>Qué no ve el Govern</h2>
+    <p>Quién ha firmado. El cálculo de verificación produce un número, no una lista de nombres.</p>
+
+    <h2>Por qué cinco depositarios</h2>
+    <p>El anonimato no depende de una sola entidad: en la versión de protección reforzada del sistema, una clave secreta se <strong>divide en cinco fragmentos</strong> y se confía a cinco personas públicas e independientes. Hace falta reunir tres de cinco para reconstituir la clave. Este diseño protege contra <strong>las presiones políticas</strong>: ningún actor solo —gobierno, partido, periodista, adversario— puede identificar a los firmantes. Hacen falta tres depositarios cooperativos a la vez, y estos se han comprometido públicamente a no hacerlo hasta el final de la recogida.</p>
+
+    <h2>Honestidad técnica</h2>
+    <p>El código es público. Cualquier investigador puede auditarlo. La promesa de anonimato reposa sobre tres pilares:</p>
+    <ul>
+      <li><strong>Criptográfico</strong>: la función de derivación (Argon2id) es deliberadamente lenta, lo que hace costosa cualquier tentativa de desanonimización.</li>
+      <li><strong>Criptográfico reforzado (Nivel 2)</strong>: la clave secreta repartida entre cinco depositarios hace que la desanonimización sea imposible durante la recogida, incluso para alguien que disponga de la lista de los NIA andorranos.</li>
+      <li><strong>Político y jurídico</strong>: el Govern, que posee la lista de los NIA válidos, es el único actor capaz de invertir la función. Está obligado por la ley andorrana y por la APDA a no hacerlo fuera del procedimiento de verificación consentida.</li>
+    </ul>
+
+    <aside class="warn">
+      <h3>Límite honesto</h3>
+      <p>Ningún sistema es perfecto. Si la lista completa de los NIA andorranos se filtrase públicamente <em>y</em> el secreto de los cinco depositarios se viese comprometido simultáneamente, cualquiera podría desanonimizar esta petición. Esta plataforma no protege contra una compromisión simultánea de estos dos elementos, que constituiría un acontecimiento político y jurídico mayor, no criptográfico.</p>
+    </aside>
+
+    <p><a href="/es/verificacio">Ir al protocolo de auditoría técnica →</a></p>
+  </article>
+</Base>
+
+<style>
+  .explain { line-height: 1.7; max-width: 42rem; margin: 0 auto; }
+  .lead { font-size: 1.15rem; color: #333; }
+  h2 { margin-top: 2.5rem; }
+  .warn { border-left: 4px solid #c80; background: #fff8e6; padding: 1rem 1.2rem; margin-top: 2rem; border-radius: 0 6px 6px 0; }
+</style>

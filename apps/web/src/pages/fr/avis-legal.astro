@@ -1,0 +1,33 @@
+---
+import Base from "../../layouts/Base.astro";
+---
+<Base title="Mentions légales · ReferendumJa" locale="fr">
+  <h1>Mentions légales</h1>
+
+  <h2>Responsable du traitement</h2>
+  <p>Artur Homs, président de Claror, est le responsable du traitement des données pseudonymisées collectées par cette plateforme.</p>
+  <p>Contact : <a href="mailto:contacte@noalacord.com">contacte@noalacord.com</a>.</p>
+
+  <h2>Nature des données</h2>
+  <p>Le numéro d'identification administrative (NIA) <strong>n'est jamais transmis au serveur</strong>. Le serveur ne reçoit qu'un engagement cryptographique (Argon2id) calculé localement sur votre appareil. Cet engagement est une donnée <strong>pseudonymisée</strong> au sens de l'article 4 de la Llei 29/2021 de protecció de dades personals. Il conserve son caractère de donnée personnelle tant que la réidentification est techniquement possible par le Govern d'Andorra, qui possède la liste officielle des NIA.</p>
+
+  <h2>Base juridique</h2>
+  <p>Consentement explicite du signataire, recueilli par une case obligatoire avant la signature.</p>
+
+  <h2>Destinataires</h2>
+  <p>Aucun. Aucune donnée n'est communiquée à des tiers. Les <em>snapshots</em> quotidiens publiés sur GitHub contiennent <strong>uniquement</strong> les engagements cryptographiques, sans aucune autre donnée associée.</p>
+
+  <h2>Durée de conservation</h2>
+  <p>Les signatures sont conservées jusqu'à la fin de la procédure politique (signature ou non de l'accord d'association avec l'UE), ou jusqu'à un an après la date de lancement — le premier des deux. Les <em>hashes</em> d'IP sont purgés au bout de 7 jours.</p>
+
+  <h2>Droits</h2>
+  <p>Vous disposez d'un droit d'accès, de rectification et de suppression. Pour les exercer, vous devez pouvoir démontrer que vous êtes titulaire du NIA correspondant. Procédure :</p>
+  <ol>
+    <li>Allez sur <a href="/fr/signar?action=delete">/fr/signar?action=delete</a>.</li>
+    <li>Saisissez votre NIA dans le formulaire (nous recalculons l'engagement localement).</li>
+    <li>Si l'engagement résultant existe en base, il est supprimé. Votre NIA n'est transmis à aucun moment.</li>
+  </ol>
+
+  <h2>APDA</h2>
+  <p>Vous pouvez déposer une réclamation auprès de l'<strong>Agència Andorrana de Protecció de Dades</strong> (APDA), Edifici Administratiu de l'Obac, AD700 Escaldes-Engordany, <a href="https://www.apda.ad">apda.ad</a>.</p>
+</Base>

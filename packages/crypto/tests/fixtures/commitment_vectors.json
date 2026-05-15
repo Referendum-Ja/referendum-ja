@@ -1,0 +1,16 @@
+{
+  "_meta": {
+    "purpose": "Frozen reference vectors for the commitment function. Any change to params.ts or normalize.ts that affects these values is a breaking change that invalidates every signature already collected.",
+    "public_salt": "petitio-referendum-andorra-2026-v1",
+    "argon2id": { "iterations": 4, "memorySize": 262144, "parallelism": 2, "hashLength": 32 },
+    "generated_at": "2026-05-15T11:53:25Z",
+    "generator": "vitest snapshot of packages/crypto/src/commit.ts on 2026-05-15",
+    "level2_note": "Level-2 vectors (with secret salt) live in audit/level2-vectors.encrypted and are not committed in plain."
+  },
+  "level1": [
+    { "nia": "123456A", "commitment_b64": "fotv3sbTCxA8YbIg1LKJb1QitYT3ZvphU+NiujZR2ao=" },
+    { "nia": "000000Z", "commitment_b64": "kTuNoawVQklI4Xi/5MaFct/Z7nXk0m9HJWNB2DwBinw=" },
+    { "nia": "999999B", "commitment_b64": "27s5aWgta8T/vu2fPy/PcWnAt0jaWS+rL5tNrvcQ5go=" },
+    { "nia": " 123-456-a ", "commitment_b64": "fotv3sbTCxA8YbIg1LKJb1QitYT3ZvphU+NiujZR2ao=" }
+  ]
+}

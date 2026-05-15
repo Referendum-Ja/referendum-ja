@@ -1,0 +1,41 @@
+---
+import Base from "../layouts/Base.astro";
+---
+<Base title="Verificació · ReferendumJa" locale="ca">
+  <h1>Protocol d'auditoria</h1>
+  <p>Aquesta pàgina està destinada al Govern, als periodistes i als investigadors independents que volen verificar la legitimitat de les signatures sense depèn de l'organitzador.</p>
+
+  <h2>1. Recupera el snapshot</h2>
+  <p>Descarrega el CSV del dia que vols verificar des del <a href="https://github.com/Referendum-Ja/referendum-ja-archives">dipòsit d'arxius</a>. Cada CSV té una Merkle root associada. Reconstrueix la root localment i compara-la amb la publicada per verificar la integritat.</p>
+
+  <h2>2. Verifica la integritat (Merkle)</h2>
+  <pre><code>python3 audit/verify_merkle.py snapshots/2026-05-15.csv</code></pre>
+
+  <h2>3. Audit governamental</h2>
+  <p>Aquest pas requereix accés a la llista oficial dels NIA dels ciutadans andorrans, que <strong>només el Govern</strong> posseeix. El script funciona <em>air-gapped</em> (sense connexió de xarxa) i produeix un informe reproduïble.</p>
+  <pre><code># Carrega el contenidor air-gapped a la màquina segura del Govern
+docker load &lt; referendum-ja-audit.tar
+docker run --network=none --rm -v $PWD:/work referendum-ja-audit \
+  /work/nia-official.csv /work/snapshot-2026-05-15.csv</code></pre>
+  <p>El script produeix:</p>
+  <ul>
+    <li>El nombre de signatures vàlides (compromisos que corresponen a un NIA andorrà real).</li>
+    <li>El nombre de signatures invàlides (compromisos sense correspondència, p. ex. NIA d'estrangers residents o errors de format).</li>
+    <li>Una sortida signable (firma destacada) que el Govern pot publicar, sense revelar cap correspondència individual.</li>
+  </ul>
+
+  <h2>Codi i descàrregues</h2>
+  <ul>
+    <li><a href="https://github.com/Referendum-Ja/referendum-ja">Codi font (AGPL-3.0)</a></li>
+    <li><a href="https://github.com/Referendum-Ja/referendum-ja/releases">Versió segellada i signada GPG</a></li>
+    <li><a href="https://github.com/Referendum-Ja/referendum-ja-archives">Arxiu de snapshots</a></li>
+  </ul>
+
+  <h2>Vectors de referència</h2>
+  <p>Els vectors criptogràfics de referència són publicats a <code>packages/crypto/tests/fixtures/commitment_vectors.json</code>. Qualsevol implementació independent ha de produir aquests mateixos valors per ser considerada compatible.</p>
+</Base>
+
+<style>
+  pre { background: #f4f4f4; padding: 0.8rem; border-radius: 4px; overflow-x: auto; }
+  code { font-family: ui-monospace, "SF Mono", Menlo, monospace; }
+</style>
